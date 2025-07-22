@@ -1,0 +1,7 @@
+# Game Scores - Tue Jul 22 11:02:31 IDT 2025
+
+WHITE: 0 points (29 moves)
+BLACK: 0 points (84 moves)
+SYSTEM: 0 points (53 moves)
+
+WINNER: WHITE
