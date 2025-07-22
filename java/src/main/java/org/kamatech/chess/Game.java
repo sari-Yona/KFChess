@@ -41,7 +41,7 @@ public class Game {
     private int blackPendingDx = 0;
     private int blackPendingDy = 0;
 
-    private static final long UPDATE_INTERVAL_MS = 16; // ~60 FPS
+    private static final long UPDATE_INTERVAL_MS = 33; // ~30 FPS for slower updates
 
     public Game(Board board, IPieceFactory pieceFactory, IGraphicsFactory graphicsFactory,
             IPhysicsFactory physicsFactory) {
@@ -274,6 +274,18 @@ public class Game {
         // Track pressed keys for movement hold detection
         pressedKeys.add(keyCode);
 
+        // Handle jump via Shift keys
+        if (keyCode == KeyEvent.VK_SHIFT) {
+            int loc = e.getKeyLocation();
+            if (loc == KeyEvent.KEY_LOCATION_LEFT && selectedPieceWhite != null) {
+                // Left Shift: white jump
+                executeCommand(Command.createJump(selectedPieceWhite, Command.Player.WHITE));
+            } else if (loc == KeyEvent.KEY_LOCATION_RIGHT && selectedPieceBlack != null) {
+                // Right Shift: black jump
+                executeCommand(Command.createJump(selectedPieceBlack, Command.Player.BLACK));
+            }
+            return;
+        }
         // Handle special keys
         switch (keyCode) {
             case KeyEvent.VK_SPACE:
@@ -685,8 +697,8 @@ public class Game {
                         piece.setPosition(interpX, interpY);
 
                         // Update progress
-                        progress += 0.1; // Adjust this value to control speed
-                        Thread.sleep(50); // Adjust this value to control smoothness
+                        progress += 0.05; // Slower progress for smoother, slower animation
+                        Thread.sleep(100); // Slower animation timing
 
                         // Request repaint
                         frame.repaint();

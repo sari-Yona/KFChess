@@ -57,7 +57,8 @@ public class State implements Cloneable {
         this.stateStartTime = System.currentTimeMillis();
 
         // Set appropriate duration for each state
-        long baseCooldown = (moves != null) ? moves.getCooldown() : 1000; // Default to 1 second if moves is null
+        // Slow down state durations by doubling the base cooldown
+        long baseCooldown = (moves != null) ? moves.getCooldown() * 2 : 2000; // Default to 2 seconds if moves is null
 
         switch (newState) {
             case MOVE:
