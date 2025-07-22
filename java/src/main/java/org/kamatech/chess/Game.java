@@ -544,19 +544,23 @@ public class Game {
     }
 
     /**
-     * Handle jump commands: move piece by pending deltas, capture if landing on enemy
+     * Handle jump commands: move piece by pending deltas, capture if landing on
+     * enemy
      */
     private void handleJumpCommand(Command command) {
         String pieceId = command.getPieceId();
-        if (!pieces.containsKey(pieceId)) return;
+        if (!pieces.containsKey(pieceId))
+            return;
         Piece piece = pieces.get(pieceId);
         // Determine pending jump deltas and reset
         int dx = (command.getPlayer() == Command.Player.WHITE) ? whitePendingDx : blackPendingDx;
         int dy = (command.getPlayer() == Command.Player.WHITE) ? whitePendingDy : blackPendingDy;
         if (command.getPlayer() == Command.Player.WHITE) {
-            whitePendingDx = 0; whitePendingDy = 0;
+            whitePendingDx = 0;
+            whitePendingDy = 0;
         } else {
-            blackPendingDx = 0; blackPendingDy = 0;
+            blackPendingDx = 0;
+            blackPendingDy = 0;
         }
         // Calculate landing position
         double nextX = piece.getX() + dx;

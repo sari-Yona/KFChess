@@ -11,7 +11,7 @@ import javax.imageio.ImageIO;
 import org.kamatech.chess.api.IGraphicsFactory;
 
 public class GraphicsFactory implements IGraphicsFactory {
-    // Sprite cache and timing for animations (moved from Game.java)
+    // Sprite cache and timing for animations 
     private static final Map<String, List<BufferedImage>> spriteCache = new HashMap<>();
     private static final Map<String, Long> stateEnterTime = new HashMap<>();
 
@@ -111,7 +111,6 @@ public class GraphicsFactory implements IGraphicsFactory {
 
     /**
      * Draw a piece with fallback graphics if sprite loading fails
-     * This method was moved from Game.java to separate graphics concerns
      */
     public static void drawPieceFallback(Graphics2D g2d, Piece piece, int x, int y, int cellWidth, int cellHeight) {
         String pieceId = piece.getId();
