@@ -41,10 +41,10 @@ public class Game {
     private int blackPendingDx = 0;
     private int blackPendingDy = 0;
 
-
     private static final long UPDATE_INTERVAL_MS = 16; // ~60 FPS
 
-    public Game(Board board, IPieceFactory pieceFactory, IGraphicsFactory graphicsFactory, IPhysicsFactory physicsFactory) {
+    public Game(Board board, IPieceFactory pieceFactory, IGraphicsFactory graphicsFactory,
+            IPhysicsFactory physicsFactory) {
         this.board = board;
         this.pieces = new HashMap<>();
         this.pieceFactory = pieceFactory;
@@ -273,7 +273,6 @@ public class Game {
         int keyCode = e.getKeyCode();
         // Track pressed keys for movement hold detection
         pressedKeys.add(keyCode);
-
 
         // Handle special keys
         switch (keyCode) {

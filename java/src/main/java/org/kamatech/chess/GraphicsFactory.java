@@ -9,6 +9,7 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 import org.kamatech.chess.api.IGraphicsFactory;
+
 public class GraphicsFactory implements IGraphicsFactory {
     // Sprite cache and timing for animations (moved from Game.java)
     private static final Map<String, List<BufferedImage>> spriteCache = new HashMap<>();

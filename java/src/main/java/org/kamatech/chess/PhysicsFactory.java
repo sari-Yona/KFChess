@@ -1,7 +1,7 @@
 package org.kamatech.chess;
 
 import org.kamatech.chess.api.IPhysicsFactory;
-import org.kamatech.chess.Moves;
+
 public class PhysicsFactory implements IPhysicsFactory {
     /**
      * Create a Physics handler for a specific piece.

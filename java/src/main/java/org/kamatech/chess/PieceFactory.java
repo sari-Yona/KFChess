@@ -1,4 +1,5 @@
 package org.kamatech.chess;
+
 import org.kamatech.chess.api.IPieceFactory;
 import org.kamatech.chess.api.IGraphicsFactory;
 import org.kamatech.chess.api.IPhysicsFactory;
@@ -9,13 +10,13 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class PieceFactory implements IPieceFactory {
-   private final IGraphicsFactory graphicsFactory;
-   private final IPhysicsFactory physicsFactory;
+    private final IGraphicsFactory graphicsFactory;
+    private final IPhysicsFactory physicsFactory;
     private Map<String, Piece> pieceTemplates;
 
-   public PieceFactory(IGraphicsFactory graphicsFactory, IPhysicsFactory physicsFactory) {
-      this.graphicsFactory = graphicsFactory;
-      this.physicsFactory = physicsFactory;
+    public PieceFactory(IGraphicsFactory graphicsFactory, IPhysicsFactory physicsFactory) {
+        this.graphicsFactory = graphicsFactory;
+        this.physicsFactory = physicsFactory;
         this.pieceTemplates = new HashMap<>();
 
         // Initialize basic piece templates
