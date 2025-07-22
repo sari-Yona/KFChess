@@ -1,8 +1,29 @@
-/cpp/OpenCV_451
-/py/.idea
-/py/__pycache__
-/.vscode
-/java/target/
-/.idea
+# Ignore OS files
+.DS_Store
+Thumbs.db
 
+# IDE directories and files
+.vscode/
+.idea/
+*.iml
+
+# Python artifacts
+py/__pycache__/
+py/.idea/
+__pycache__/
+*.py[cod]
+
+# C++ build directories
+cpp/OpenCV_451/
+
+# Java build outputs
+java/target/
+*.class
+
+# Log files and directories
+game_logs/
+java/game_logs/
+*.log
+
+# Other files
 .fake
