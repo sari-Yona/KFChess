@@ -544,15 +544,35 @@ public class Game {
     }
 
     /**
-     * Handle jump commands
+     * Handle jump commands: move piece by pending deltas, capture if landing on enemy
      */
     private void handleJumpCommand(Command command) {
         String pieceId = command.getPieceId();
-        if (pieces.containsKey(pieceId)) {
-            Piece piece = pieces.get(pieceId);
-            piece.getState().setState(State.PieceState.JUMP);
-            System.out.println("Piece " + pieceId + " is jumping!");
+        if (!pieces.containsKey(pieceId)) return;
+        Piece piece = pieces.get(pieceId);
+        // Determine pending jump deltas and reset
+        int dx = (command.getPlayer() == Command.Player.WHITE) ? whitePendingDx : blackPendingDx;
+        int dy = (command.getPlayer() == Command.Player.WHITE) ? whitePendingDy : blackPendingDy;
+        if (command.getPlayer() == Command.Player.WHITE) {
+            whitePendingDx = 0; whitePendingDy = 0;
+        } else {
+            blackPendingDx = 0; blackPendingDy = 0;
         }
+        // Calculate landing position
+        double nextX = piece.getX() + dx;
+        double nextY = piece.getY() + dy;
+        // Check for enemy at landing
+        Piece target = findPieceAt(nextX, nextY);
+        if (target != null && target.isWhite() != piece.isWhite()) {
+            System.out.println("Jump collision: " + pieceId + " lands on " + target.getId());
+            handleCollision(piece, target);
+        } else {
+            // Move piece to landing
+            piece.setPosition(nextX, nextY);
+        }
+        // Set jump state
+        piece.getState().setState(State.PieceState.JUMP);
+        System.out.println("Piece " + pieceId + " jumped to (" + nextX + "," + nextY + ")");
     }
 
     /**
