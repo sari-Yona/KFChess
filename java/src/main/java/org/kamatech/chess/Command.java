@@ -4,7 +4,7 @@ package org.kamatech.chess;
  * Represents a game command with support for textual format and player tracking
  * Format: [PLAYER][PIECE] [FROM]->[TO] or [KEY_COMMAND]
  * Examples: "WQ e2->e5", "WASD_UP", "ARROW_LEFT"
- * This class now also handles input processing (moved from Game.java)
+ * This class now also handles input processing
  */
 public class Command {
     public enum CommandType {
