@@ -107,8 +107,6 @@ public class Game {
             }
 
         } catch (Exception e) {
-            System.err.println("Error loading pieces: " + e.getMessage());
-            e.printStackTrace();
             // Fall back to default pieces
             pieces.putAll(pieceFactory.createDefaultPieces());
         }
@@ -255,15 +253,14 @@ public class Game {
     private void endGame(Command.Player winner, String reason) {
         running = false;
         logger.logCommand(Command.createGameControl("GAME_ENDED: " + reason));
-
-        System.out.println("\n" + "=".repeat(50));
-        System.out.println("GAME OVER!");
-        System.out.println(reason);
-        System.out.println("Winner: " + winner);
-        System.out.println("=".repeat(50));
-
-        logger.printGameStats();
         logger.saveLogs();
+        // Display game over animation dialog
+        SwingUtilities.invokeLater(() -> {
+            JOptionPane.showMessageDialog(frame,
+                reason + "\nWinner: " + winner,
+                "Game Over",
+                JOptionPane.INFORMATION_MESSAGE);
+        });
     }
 
     /**
@@ -299,7 +296,6 @@ public class Game {
                     // Execute accumulated move if exists
                     if ((whitePendingDx != 0 || whitePendingDy != 0) && selectedPieceWhite != null) {
                         Piece piece = pieces.get(selectedPieceWhite);
-                        System.out.println("Attempting white move: dx=" + whitePendingDx + ", dy=" + whitePendingDy);
 
                         // Create move command for validation and execution
                         Command moveCommand = Command.createKeyInput("MOVE", Command.Player.WHITE);
@@ -312,7 +308,6 @@ public class Game {
                     whiteInMovementMode = false;
                     whitePendingDx = 0;
                     whitePendingDy = 0;
-                    System.out.println("White player exited movement mode");
                 }
                 break;
 
@@ -327,7 +322,6 @@ public class Game {
                     // Execute accumulated move if exists
                     if ((blackPendingDx != 0 || blackPendingDy != 0) && selectedPieceBlack != null) {
                         Piece piece = pieces.get(selectedPieceBlack);
-                        System.out.println("Attempting black move: dx=" + blackPendingDx + ", dy=" + blackPendingDy);
 
                         // Create move command for validation and execution
                         Command moveCommand = Command.createKeyInput("MOVE", Command.Player.BLACK);
@@ -340,7 +334,6 @@ public class Game {
                     blackInMovementMode = false;
                     blackPendingDx = 0;
                     blackPendingDy = 0;
-                    System.out.println("Black player exited movement mode");
                 }
                 break;
             case KeyEvent.VK_ESCAPE:
@@ -357,7 +350,6 @@ public class Game {
                     selectPieceWithDirection(Command.Player.WHITE, "UP");
                 } else {
                     whitePendingDy--;
-                    System.out.println("White player pending move: dx=" + whitePendingDx + ", dy=" + whitePendingDy);
                 }
                 break;
             case KeyEvent.VK_S:
@@ -391,7 +383,6 @@ public class Game {
                     selectPieceWithDirection(Command.Player.BLACK, "UP");
                 } else {
                     blackPendingDy--;
-                    System.out.println("Black player pending move: dx=" + blackPendingDx + ", dy=" + blackPendingDy);
                 }
                 break;
             case KeyEvent.VK_DOWN:
@@ -492,7 +483,6 @@ public class Game {
                 handleJumpCommand(command);
                 break;
             default:
-                System.out.println("Unknown command type: " + command.getCommandType());
         }
     }
 
@@ -514,12 +504,10 @@ public class Game {
                 : pieces.get(selectedPieceBlack);
 
         if (piece == null) {
-            System.out.println("No piece selected for movement");
             return;
         }
 
         if (!piece.getState().canPerformAction()) {
-            System.out.println("Piece cannot perform action now");
             return;
         }
 
@@ -527,7 +515,6 @@ public class Game {
         int dx = (player == Command.Player.WHITE) ? whitePendingDx : blackPendingDx;
         int dy = (player == Command.Player.WHITE) ? whitePendingDy : blackPendingDy;
 
-        System.out.println("Moving piece " + piece.getId() + " by dx=" + dx + ", dy=" + dy);
 
         // Move the piece step by step
         movePieceStepByStep(piece, dx, dy);
@@ -568,7 +555,6 @@ public class Game {
         // Check for enemy at landing
         Piece target = findPieceAt(nextX, nextY);
         if (target != null && target.isWhite() != piece.isWhite()) {
-            System.out.println("Jump collision: " + pieceId + " lands on " + target.getId());
             handleCollision(piece, target);
         } else {
             // Move piece to landing

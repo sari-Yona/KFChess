@@ -11,7 +11,7 @@ import javax.imageio.ImageIO;
 import org.kamatech.chess.api.IGraphicsFactory;
 
 public class GraphicsFactory implements IGraphicsFactory {
-    // Sprite cache and timing for animations 
+    // Sprite cache and timing for animations
     private static final Map<String, List<BufferedImage>> spriteCache = new HashMap<>();
     private static final Map<String, Long> stateEnterTime = new HashMap<>();
 
