@@ -257,9 +257,9 @@ public class Game {
         // Display game over animation dialog
         SwingUtilities.invokeLater(() -> {
             JOptionPane.showMessageDialog(frame,
-                reason + "\nWinner: " + winner,
-                "Game Over",
-                JOptionPane.INFORMATION_MESSAGE);
+                    reason + "\nWinner: " + winner,
+                    "Game Over",
+                    JOptionPane.INFORMATION_MESSAGE);
         });
     }
 
@@ -514,7 +514,6 @@ public class Game {
         // Use accumulated movement values
         int dx = (player == Command.Player.WHITE) ? whitePendingDx : blackPendingDx;
         int dy = (player == Command.Player.WHITE) ? whitePendingDy : blackPendingDy;
-
 
         // Move the piece step by step
         movePieceStepByStep(piece, dx, dy);
