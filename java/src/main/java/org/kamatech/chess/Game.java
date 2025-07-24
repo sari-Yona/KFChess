@@ -45,6 +45,7 @@ public class Game {
     private EventBus eventBus;
     private MoveTableListener moveTableListener;
     private AnimationListener animationListener;
+    private SoundPlayer soundPlayer;
     private int moveCounter = 0;
 
     private static final long UPDATE_INTERVAL_MS = 33; // ~30 FPS for slower updates
@@ -72,6 +73,10 @@ public class Game {
         this.moveTableListener = new MoveTableListener();
         this.eventBus.subscribe(PieceMovedEvent.class, moveTableListener);
 
+        // Create and register SoundPlayer
+        this.soundPlayer = new SoundPlayer();
+        this.eventBus.subscribe(SoundEvent.class, soundPlayer);
+
         // Create and setup the window
         this.frame = new JFrame("Chess Game");
         this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -86,12 +91,13 @@ public class Game {
         // Create AnimationListener and subscribe to events
         this.animationListener = new AnimationListener(frame, mainPanel);
         // Subscribe to specific event types for animations
-        this.eventBus.subscribe(GameStartedEvent.class, new org.kamatech.chess.events.EventListener<GameStartedEvent>() {
-            @Override
-            public void onEvent(GameStartedEvent event) {
-                animationListener.onEvent(event);
-            }
-        });
+        this.eventBus.subscribe(GameStartedEvent.class,
+                new org.kamatech.chess.events.EventListener<GameStartedEvent>() {
+                    @Override
+                    public void onEvent(GameStartedEvent event) {
+                        animationListener.onEvent(event);
+                    }
+                });
         this.eventBus.subscribe(GameEndedEvent.class, new org.kamatech.chess.events.EventListener<GameEndedEvent>() {
             @Override
             public void onEvent(GameEndedEvent event) {
@@ -123,7 +129,7 @@ public class Game {
         leftPanel.add(blackScrollPane, BorderLayout.CENTER);
         leftPanel.add(moveTableListener.getBlackScoreLabel(), BorderLayout.SOUTH);
 
-        // Create right panel for white player moves  
+        // Create right panel for white player moves
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.setPreferredSize(new Dimension(200, 800));
         rightPanel.setBorder(BorderFactory.createTitledBorder("White Player Moves"));
@@ -313,11 +319,11 @@ public class Game {
         running = false;
         logger.logCommand(Command.createGameControl("GAME_ENDED: " + reason));
         logger.saveLogs();
-        
+
         // Publish game ended event
         GameEndedEvent gameEndedEvent = new GameEndedEvent(winner.toString());
         eventBus.publish(gameEndedEvent);
-        
+
         // Display game over animation dialog
         SwingUtilities.invokeLater(() -> {
             JOptionPane.showMessageDialog(frame,
@@ -617,7 +623,7 @@ public class Game {
         double currentY = piece.getY();
         double nextX = currentX + dx;
         double nextY = currentY + dy;
-        
+
         // Check for enemy at landing
         Piece target = findPieceAt(nextX, nextY);
         if (target != null && target.isWhite() != piece.isWhite()) {
@@ -764,6 +770,11 @@ public class Game {
             // Set piece to MOVE state for animation
             piece.getState().setState(State.PieceState.MOVE);
 
+            // Publish sound event for move
+            SoundEvent moveSound = new SoundEvent(SoundEvent.SoundType.MOVE);
+            System.out.println("DEBUG: Publishing MOVE sound event");
+            eventBus.publish(moveSound);
+
             // Publish move event for regular move (no capture)
             publishMoveEvent(piece, currentX, currentY, nextX, nextY, null);
 
@@ -812,8 +823,8 @@ public class Game {
      * Convert board coordinates to chess notation (e.g., 0,0 -> a1, 1,0 -> b1)
      */
     private String coordinatesToChessNotation(double x, double y) {
-        char file = (char)('a' + (int)x);
-        int rank = (int)(8 - y); // Chess ranks are numbered 1-8 from bottom to top
+        char file = (char) ('a' + (int) x);
+        int rank = (int) (8 - y); // Chess ranks are numbered 1-8 from bottom to top
         return "" + file + rank;
     }
 
@@ -821,39 +832,41 @@ public class Game {
      * Get piece type character from piece ID
      */
     private String getPieceTypeFromId(String pieceId) {
-        if (pieceId == null || pieceId.length() == 0) return "?";
+        if (pieceId == null || pieceId.length() == 0)
+            return "?";
         return pieceId.substring(0, 1); // First character is piece type
     }
 
     /**
-     * Get player from piece ID  
+     * Get player from piece ID
      */
     private String getPlayerFromId(String pieceId) {
-        if (pieceId == null || pieceId.length() < 2) return "UNKNOWN";
+        if (pieceId == null || pieceId.length() < 2)
+            return "UNKNOWN";
         return pieceId.contains("W") ? "WHITE" : "BLACK";
     }
 
     /**
      * Publish a move event to the event bus
      */
-    private void publishMoveEvent(Piece piece, double fromX, double fromY, double toX, double toY, String capturedPiece) {
+    private void publishMoveEvent(Piece piece, double fromX, double fromY, double toX, double toY,
+            String capturedPiece) {
         String pieceId = getPieceIdFromPiece(piece);
         String fromNotation = coordinatesToChessNotation(fromX, fromY);
         String toNotation = coordinatesToChessNotation(toX, toY);
         String player = getPlayerFromId(pieceId);
         String pieceType = getPieceTypeFromId(pieceId);
-        
+
         moveCounter++;
-        
+
         PieceMovedEvent event = new PieceMovedEvent(
-            fromNotation,
-            toNotation,
-            player,
-            pieceType,
-            moveCounter,
-            capturedPiece
-        );
-        
+                fromNotation,
+                toNotation,
+                player,
+                pieceType,
+                moveCounter,
+                capturedPiece);
+
         eventBus.publish(event);
     }
 
@@ -1006,7 +1019,7 @@ public class Game {
             double fromY = movingPiece.getY();
             double toX = targetPiece.getX();
             double toY = targetPiece.getY();
-            
+
             // Find map keys for moving and target pieces
             String movingKey = null;
             String targetKey = null;
@@ -1032,6 +1045,11 @@ public class Game {
             if (DEBUG)
                 System.out.println("DEBUG: Moved piece " + movingKey + " to position " + targetPiece.getX() + ","
                         + targetPiece.getY());
+
+            // Publish sound event for eat
+            SoundEvent eatSound = new SoundEvent(SoundEvent.SoundType.EAT);
+            System.out.println("DEBUG: Publishing EAT sound event");
+            eventBus.publish(eatSound);
 
             // Publish move event with capture information
             publishMoveEvent(movingPiece, fromX, fromY, toX, toY, capturedPieceType);
