@@ -3,6 +3,8 @@ package org.kamatech.chess;
 import javax.swing.*;
 import java.awt.*;
 import org.kamatech.chess.api.*;
+import org.kamatech.chess.events.*;
+import org.kamatech.chess.listeners.*;
 import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.*;
@@ -39,6 +41,12 @@ public class Game {
     private int blackPendingDx = 0;
     private int blackPendingDy = 0;
 
+    // Event system
+    private EventBus eventBus;
+    private MoveTableListener moveTableListener;
+    private AnimationListener animationListener;
+    private int moveCounter = 0;
+
     private static final long UPDATE_INTERVAL_MS = 33; // ~30 FPS for slower updates
 
     public Game(Board board, IPieceFactory pieceFactory, IGraphicsFactory graphicsFactory,
@@ -59,27 +67,76 @@ public class Game {
         this.hoveredPieceWhite = null;
         this.hoveredPieceBlack = null;
 
+        // Create EventBus and MoveTableListener
+        this.eventBus = new EventBus();
+        this.moveTableListener = new MoveTableListener();
+        this.eventBus.subscribe(PieceMovedEvent.class, moveTableListener);
+
         // Create and setup the window
         this.frame = new JFrame("Chess Game");
         this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.frame.setSize(800, 800);
+        this.frame.setSize(1200, 1200);
         this.frame.setLocationRelativeTo(null);
         this.frame.addKeyListener(new InputHandler(this));
         this.frame.setFocusable(true);
 
-        this.frame.add(new JPanel() {
+        // Create main panel with BorderLayout
+        JPanel mainPanel = new JPanel(new BorderLayout());
+
+        // Create AnimationListener and subscribe to events
+        this.animationListener = new AnimationListener(frame, mainPanel);
+        // Subscribe to specific event types for animations
+        this.eventBus.subscribe(GameStartedEvent.class, new org.kamatech.chess.events.EventListener<GameStartedEvent>() {
+            @Override
+            public void onEvent(GameStartedEvent event) {
+                animationListener.onEvent(event);
+            }
+        });
+        this.eventBus.subscribe(GameEndedEvent.class, new org.kamatech.chess.events.EventListener<GameEndedEvent>() {
+            @Override
+            public void onEvent(GameEndedEvent event) {
+                animationListener.onEvent(event);
+            }
+        });
+
+        // Create game board panel (center)
+        JPanel gameBoardPanel = new JPanel() {
             @Override
             protected void paintComponent(java.awt.Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g;
 
-                // Use GraphicsFactory to draw everything
+                // Use GraphicsFactory to draw everything - centered in 800x800 area
                 GraphicsFactory.drawGameBoard(g2d, board, pieces,
                         hoveredPieceWhite, hoveredPieceBlack,
                         selectedPieceWhite, selectedPieceBlack,
-                        getWidth(), getHeight());
+                        800, 800);
             }
-        });
+        };
+        gameBoardPanel.setPreferredSize(new Dimension(800, 800));
+
+        // Create left panel for black player moves
+        JPanel leftPanel = new JPanel(new BorderLayout());
+        leftPanel.setPreferredSize(new Dimension(200, 800));
+        leftPanel.setBorder(BorderFactory.createTitledBorder("Black Player Moves"));
+        JScrollPane blackScrollPane = new JScrollPane(moveTableListener.getBlackTable());
+        leftPanel.add(blackScrollPane, BorderLayout.CENTER);
+        leftPanel.add(moveTableListener.getBlackScoreLabel(), BorderLayout.SOUTH);
+
+        // Create right panel for white player moves  
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.setPreferredSize(new Dimension(200, 800));
+        rightPanel.setBorder(BorderFactory.createTitledBorder("White Player Moves"));
+        JScrollPane whiteScrollPane = new JScrollPane(moveTableListener.getWhiteTable());
+        rightPanel.add(whiteScrollPane, BorderLayout.CENTER);
+        rightPanel.add(moveTableListener.getWhiteScoreLabel(), BorderLayout.SOUTH);
+
+        // Add panels to main panel
+        mainPanel.add(leftPanel, BorderLayout.WEST);
+        mainPanel.add(gameBoardPanel, BorderLayout.CENTER);
+        mainPanel.add(rightPanel, BorderLayout.EAST);
+
+        this.frame.add(mainPanel);
 
         initializeGame();
     }
@@ -137,6 +194,10 @@ public class Game {
         frame.setVisible(true);
         running = true;
         logger.logCommand(Command.createGameControl("GAME_STARTED"));
+
+        // Publish game started event
+        GameStartedEvent gameStartedEvent = new GameStartedEvent();
+        eventBus.publish(gameStartedEvent);
 
         // Auto-select first piece for each player
         autoSelectFirstPieces();
@@ -252,6 +313,11 @@ public class Game {
         running = false;
         logger.logCommand(Command.createGameControl("GAME_ENDED: " + reason));
         logger.saveLogs();
+        
+        // Publish game ended event
+        GameEndedEvent gameEndedEvent = new GameEndedEvent(winner.toString());
+        eventBus.publish(gameEndedEvent);
+        
         // Display game over animation dialog
         SwingUtilities.invokeLater(() -> {
             JOptionPane.showMessageDialog(frame,
@@ -547,15 +613,20 @@ public class Game {
             blackPendingDy = 0;
         }
         // Calculate landing position
-        double nextX = piece.getX() + dx;
-        double nextY = piece.getY() + dy;
+        double currentX = piece.getX();
+        double currentY = piece.getY();
+        double nextX = currentX + dx;
+        double nextY = currentY + dy;
+        
         // Check for enemy at landing
         Piece target = findPieceAt(nextX, nextY);
         if (target != null && target.isWhite() != piece.isWhite()) {
             handleCollision(piece, target);
         } else {
-            // Move piece to landing
+            // Move piece to landing (no capture)
             piece.setPosition(nextX, nextY);
+            // Publish jump event without capture
+            publishMoveEvent(piece, currentX, currentY, nextX, nextY, null);
         }
         // Set jump state
         piece.getState().setState(State.PieceState.JUMP);
@@ -693,6 +764,9 @@ public class Game {
             // Set piece to MOVE state for animation
             piece.getState().setState(State.PieceState.MOVE);
 
+            // Publish move event for regular move (no capture)
+            publishMoveEvent(piece, currentX, currentY, nextX, nextY, null);
+
             // Create animation thread
             new Thread(() -> {
                 try {
@@ -732,6 +806,67 @@ public class Game {
         }
 
         // No need for immediate repaint here as animation thread handles it
+    }
+
+    /**
+     * Convert board coordinates to chess notation (e.g., 0,0 -> a1, 1,0 -> b1)
+     */
+    private String coordinatesToChessNotation(double x, double y) {
+        char file = (char)('a' + (int)x);
+        int rank = (int)(8 - y); // Chess ranks are numbered 1-8 from bottom to top
+        return "" + file + rank;
+    }
+
+    /**
+     * Get piece type character from piece ID
+     */
+    private String getPieceTypeFromId(String pieceId) {
+        if (pieceId == null || pieceId.length() == 0) return "?";
+        return pieceId.substring(0, 1); // First character is piece type
+    }
+
+    /**
+     * Get player from piece ID  
+     */
+    private String getPlayerFromId(String pieceId) {
+        if (pieceId == null || pieceId.length() < 2) return "UNKNOWN";
+        return pieceId.contains("W") ? "WHITE" : "BLACK";
+    }
+
+    /**
+     * Publish a move event to the event bus
+     */
+    private void publishMoveEvent(Piece piece, double fromX, double fromY, double toX, double toY, String capturedPiece) {
+        String pieceId = getPieceIdFromPiece(piece);
+        String fromNotation = coordinatesToChessNotation(fromX, fromY);
+        String toNotation = coordinatesToChessNotation(toX, toY);
+        String player = getPlayerFromId(pieceId);
+        String pieceType = getPieceTypeFromId(pieceId);
+        
+        moveCounter++;
+        
+        PieceMovedEvent event = new PieceMovedEvent(
+            fromNotation,
+            toNotation,
+            player,
+            pieceType,
+            moveCounter,
+            capturedPiece
+        );
+        
+        eventBus.publish(event);
+    }
+
+    /**
+     * Get piece ID from piece object
+     */
+    private String getPieceIdFromPiece(Piece piece) {
+        for (Map.Entry<String, Piece> entry : pieces.entrySet()) {
+            if (entry.getValue() == piece) {
+                return entry.getKey();
+            }
+        }
+        return piece.getId(); // fallback
     }
 
     /**
@@ -866,6 +1001,12 @@ public class Game {
     private void handleCollision(Piece movingPiece, Piece targetPiece) {
         // Check if it's a capture (different players)
         if (movingPiece.isWhite() != targetPiece.isWhite()) {
+            // Store original positions for event
+            double fromX = movingPiece.getX();
+            double fromY = movingPiece.getY();
+            double toX = targetPiece.getX();
+            double toY = targetPiece.getY();
+            
             // Find map keys for moving and target pieces
             String movingKey = null;
             String targetKey = null;
@@ -875,6 +1016,9 @@ public class Game {
                 if (e.getValue() == targetPiece)
                     targetKey = e.getKey();
             }
+
+            // Get captured piece type for event
+            String capturedPieceType = getPieceTypeFromId(targetKey);
 
             // Remove the captured piece
             if (targetKey != null) {
@@ -888,6 +1032,9 @@ public class Game {
             if (DEBUG)
                 System.out.println("DEBUG: Moved piece " + movingKey + " to position " + targetPiece.getX() + ","
                         + targetPiece.getY());
+
+            // Publish move event with capture information
+            publishMoveEvent(movingPiece, fromX, fromY, toX, toY, capturedPieceType);
 
             // Log capture using full keys
             Command.Player capturer = movingPiece.isWhite() ? Command.Player.WHITE : Command.Player.BLACK;
