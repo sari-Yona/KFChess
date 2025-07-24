@@ -2,9 +2,7 @@ package org.kamatech.chess;
 
 import javax.swing.*;
 import java.awt.*;
-import org.kamatech.chess.api.IPieceFactory;
-import org.kamatech.chess.api.IGraphicsFactory;
-import org.kamatech.chess.api.IPhysicsFactory;
+import org.kamatech.chess.api.*;
 import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.*;

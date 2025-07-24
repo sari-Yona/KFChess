@@ -196,8 +196,6 @@ public class GraphicsFactory implements IGraphicsFactory {
         int cellWidth = panelWidth / board.getWidthCells();
         int cellHeight = panelHeight / board.getHeightCells();
 
-        // Draw debug info
-        drawDebugInfo(g2d, hoveredPieceWhite, hoveredPieceBlack);
 
         // Draw all pieces
         drawAllPieces(g2d, pieces, cellWidth, cellHeight,
@@ -205,17 +203,7 @@ public class GraphicsFactory implements IGraphicsFactory {
                 selectedPieceWhite, selectedPieceBlack);
     }
 
-    /**
-     * Draw debug information on screen
-     */
-    private static void drawDebugInfo(Graphics2D g2d, String hoveredPieceWhite, String hoveredPieceBlack) {
-        g2d.setColor(Color.WHITE);
-        g2d.setFont(new Font("Arial", Font.BOLD, 16));
-        g2d.drawString("White hover: " + hoveredPieceWhite, 10, 30);
-        g2d.drawString("Black hover: " + hoveredPieceBlack, 10, 50);
-        g2d.drawString("Press Q/E/Z/C to test white hover", 10, 70);
-        g2d.drawString("Press U/O/J/L to test black hover", 10, 90);
-    }
+
 
     /**
      * Draw all pieces with their sprites, hover effects, and selection borders
