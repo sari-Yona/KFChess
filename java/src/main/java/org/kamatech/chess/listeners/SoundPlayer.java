@@ -2,8 +2,6 @@ package org.kamatech.chess.listeners;
 
 import org.kamatech.chess.events.*;
 import javax.sound.sampled.*;
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * Sound player for chess game events
@@ -117,94 +115,5 @@ public class SoundPlayer implements EventListener<SoundEvent> {
             Thread.sleep(500);
             clip.close();
         }
-    }
-
-    /**
-     * Play system sound for moves
-     */
-    private void playSystemSound() {
-        new Thread(() -> {
-            try {
-                java.awt.Toolkit.getDefaultToolkit().beep();
-                System.out.println("DEBUG: System beep played successfully");
-            } catch (Exception e) {
-                System.out.println("ERROR: Failed to play system sound: " + e.getMessage());
-            }
-        }).start();
-    }
-
-    /**
-     * Play different system sound for captures
-     */
-    private void playSystemBeep() {
-        new Thread(() -> {
-            try {
-                // Double beep for capture
-                java.awt.Toolkit.getDefaultToolkit().beep();
-                Thread.sleep(100);
-                java.awt.Toolkit.getDefaultToolkit().beep();
-                System.out.println("DEBUG: Double beep played successfully");
-            } catch (Exception e) {
-                System.out.println("ERROR: Failed to play capture sound: " + e.getMessage());
-            }
-        }).start();
-    }
-
-    /**
-     * Play a sound file from resources
-     */
-    private void playSound(String soundFileName) {
-        System.out.println("DEBUG: Attempting to play sound: " + soundFileName);
-
-        new Thread(() -> {
-            try {
-                // Load sound file from resources
-                InputStream audioStream = getClass().getClassLoader().getResourceAsStream(soundFileName);
-                if (audioStream == null) {
-                    System.out.println("ERROR: Sound file not found in resources: " + soundFileName);
-                    return;
-                }
-
-                System.out.println("DEBUG: Sound file loaded successfully: " + soundFileName);
-
-                // For WAV files, AudioInputStream should work perfectly
-                // WAV is natively supported by Java's AudioSystem
-                AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(audioStream);
-
-                System.out.println("DEBUG: AudioInputStream created for: " + soundFileName);
-
-                // Get audio format and create clip
-                Clip clip = AudioSystem.getClip();
-                clip.open(audioInputStream);
-
-                System.out.println("DEBUG: Clip opened and ready to play: " + soundFileName);
-
-                // Play the sound
-                clip.start();
-
-                System.out.println("DEBUG: Sound started playing: " + soundFileName);
-
-                // Clean up when done
-                clip.addLineListener(event -> {
-                    if (event.getType() == LineEvent.Type.STOP) {
-                        System.out.println("DEBUG: Sound finished playing: " + soundFileName);
-                        clip.close();
-                    }
-                });
-
-            } catch (UnsupportedAudioFileException e) {
-                System.out.println(
-                        "ERROR: Unsupported audio format: " + soundFileName + " (Error: " + e.getMessage() + ")");
-            } catch (IOException e) {
-                System.out.println(
-                        "ERROR: IO error loading sound file: " + soundFileName + " (Error: " + e.getMessage() + ")");
-            } catch (LineUnavailableException e) {
-                System.out.println(
-                        "ERROR: Audio line unavailable for: " + soundFileName + " (Error: " + e.getMessage() + ")");
-            } catch (Exception e) {
-                System.out.println(
-                        "ERROR: Unexpected error playing sound: " + soundFileName + " (Error: " + e.getMessage() + ")");
-            }
-        }).start();
     }
 }
