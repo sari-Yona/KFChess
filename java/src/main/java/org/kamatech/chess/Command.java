@@ -384,7 +384,7 @@ public class Command {
         for (String pieceId : pieces.keySet()) {
             Object pieceObj = pieces.get(pieceId);
             if (pieceObj instanceof Piece) {
-                Piece piece = (Piece)pieceObj;
+                Piece piece = (Piece) pieceObj;
                 if (isWhitePlayer == piece.isWhite()) {
                     playerPieces.add(pieceId);
                 }

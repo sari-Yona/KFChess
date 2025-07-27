@@ -157,7 +157,8 @@ public class Game {
 
             logger.logCommand(Command.createGameControl("GAME_INITIALIZED"));
 
-            // Note: hover and selection initialization will be done in autoSelectFirstPieces()
+            // Note: hover and selection initialization will be done in
+            // autoSelectFirstPieces()
 
         } catch (Exception e) {
             // Fall back to default pieces
@@ -207,13 +208,14 @@ public class Game {
     }
 
     /**
-     * Auto-select the first piece for each player using the same logic as hover initialization
+     * Auto-select the first piece for each player using the same logic as hover
+     * initialization
      */
     private void autoSelectFirstPieces() {
         // Use the same logic as initializeGame to ensure consistency
         List<String> whitePieces = Command.getPlayerPieces(Command.Player.WHITE, pieces);
         List<String> blackPieces = Command.getPlayerPieces(Command.Player.BLACK, pieces);
-        
+
         // Select and hover the same pieces for white player
         if (!whitePieces.isEmpty()) {
             String firstWhitePiece = whitePieces.get(0);
@@ -663,11 +665,11 @@ public class Game {
         }
 
         String newSelectedPiece = playerPieces.get(currentIndex);
-        
+
         // Double-check the piece color matches the player before assigning
         boolean pieceColorMatches = (player == Command.Player.WHITE && newSelectedPiece.contains("W")) ||
-                                   (player == Command.Player.BLACK && newSelectedPiece.contains("B"));
-                                   
+                (player == Command.Player.BLACK && newSelectedPiece.contains("B"));
+
         if (!pieceColorMatches) {
             System.out.println("ERROR: Attempted to select piece of wrong color: " + newSelectedPiece);
             return;
@@ -718,11 +720,11 @@ public class Game {
         }
 
         String newHoveredPiece = playerPieces.get(currentIndex);
-        
+
         // Double-check the piece color matches the player before hovering
         boolean pieceColorMatches = (player == Command.Player.WHITE && newHoveredPiece.contains("W")) ||
-                                   (player == Command.Player.BLACK && newHoveredPiece.contains("B"));
-                                   
+                (player == Command.Player.BLACK && newHoveredPiece.contains("B"));
+
         if (!pieceColorMatches) {
             System.out.println("ERROR: Attempted to hover over piece of wrong color: " + newHoveredPiece);
             return;

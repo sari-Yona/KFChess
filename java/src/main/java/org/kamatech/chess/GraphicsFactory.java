@@ -196,14 +196,11 @@ public class GraphicsFactory implements IGraphicsFactory {
         int cellWidth = panelWidth / board.getWidthCells();
         int cellHeight = panelHeight / board.getHeightCells();
 
-
         // Draw all pieces
         drawAllPieces(g2d, pieces, cellWidth, cellHeight,
                 hoveredPieceWhite, hoveredPieceBlack,
                 selectedPieceWhite, selectedPieceBlack);
     }
-
-
 
     /**
      * Draw all pieces with their sprites, hover effects, and selection borders
@@ -276,7 +273,7 @@ public class GraphicsFactory implements IGraphicsFactory {
             if (key.equals(selectedPieceWhite) && piece.isWhite()) {
                 drawSelectionBorder(g2d, x, y, cellWidth, cellHeight, true);
             }
-            
+
             // Black player can only highlight black pieces
             if (key.equals(selectedPieceBlack) && !piece.isWhite()) {
                 drawSelectionBorder(g2d, x, y, cellWidth, cellHeight, false);
