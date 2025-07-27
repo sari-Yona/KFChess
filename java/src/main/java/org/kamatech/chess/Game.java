@@ -40,6 +40,46 @@ public class Game {
     private int whitePendingDy = 0;
     private int blackPendingDx = 0;
     private int blackPendingDy = 0;
+    // Visual position tracking for real-time feedback
+    private double whiteVisualX = -1, whiteVisualY = -1; // Visual position for white piece
+    private double blackVisualX = -1, blackVisualY = -1; // Visual position for black piece
+
+    private void updateVisualPosition(Command.Player player) {
+        try {
+            if (player == Command.Player.WHITE && selectedPieceWhite != null) {
+                Piece piece = pieces.get(selectedPieceWhite);
+                if (piece != null) {
+                    whiteVisualX = piece.getX() + whitePendingDx;
+                    whiteVisualY = piece.getY() + whitePendingDy;
+                }
+            } else if (player == Command.Player.BLACK && selectedPieceBlack != null) {
+                Piece piece = pieces.get(selectedPieceBlack);
+                if (piece != null) {
+                    blackVisualX = piece.getX() + blackPendingDx;
+                    blackVisualY = piece.getY() + blackPendingDy;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error updating visual position: " + e.getMessage());
+        }
+    }
+
+    private void initializeVisualPosition(Command.Player player) {
+        // Initialize visual position to match the current piece position
+        if (player == Command.Player.WHITE && selectedPieceWhite != null) {
+            Piece piece = pieces.get(selectedPieceWhite);
+            if (piece != null) {
+                whiteVisualX = piece.getX();
+                whiteVisualY = piece.getY();
+            }
+        } else if (player == Command.Player.BLACK && selectedPieceBlack != null) {
+            Piece piece = pieces.get(selectedPieceBlack);
+            if (piece != null) {
+                blackVisualX = piece.getX();
+                blackVisualY = piece.getY();
+            }
+        }
+    }
 
     // Event system
     private EventBus eventBus;
@@ -116,6 +156,8 @@ public class Game {
                 GraphicsFactory.drawGameBoard(g2d, board, pieces,
                         hoveredPieceWhite, hoveredPieceBlack,
                         selectedPieceWhite, selectedPieceBlack,
+                        whiteInMovementMode, blackInMovementMode,
+                        whiteVisualX, whiteVisualY, blackVisualX, blackVisualY,
                         800, 800);
             }
         };
@@ -352,13 +394,15 @@ public class Game {
         // Handle special keys
         switch (keyCode) {
             case KeyEvent.VK_SPACE:
-                // White player movement confirmation
-                if (!whiteInMovementMode) {
+                // White player: SPACE for movement mode only (no piece selection)
+                if (!whiteInMovementMode && selectedPieceWhite != null) {
+                    // Enter movement mode
                     whiteInMovementMode = true;
                     whitePendingDx = 0;
                     whitePendingDy = 0;
+                    initializeVisualPosition(Command.Player.WHITE);
                     System.out.println("White player entered movement mode");
-                } else {
+                } else if (whiteInMovementMode) {
                     // Execute accumulated move if exists
                     if ((whitePendingDx != 0 || whitePendingDy != 0) && selectedPieceWhite != null) {
                         Piece piece = pieces.get(selectedPieceWhite);
@@ -374,17 +418,22 @@ public class Game {
                     whiteInMovementMode = false;
                     whitePendingDx = 0;
                     whitePendingDy = 0;
+                    whiteVisualX = -1; // Reset visual position
+                    whiteVisualY = -1;
+                    System.out.println("White player exited movement mode");
                 }
                 break;
 
             case KeyEvent.VK_ENTER:
-                // Black player movement confirmation
-                if (!blackInMovementMode) {
+                // Black player: ENTER for movement mode only (no piece selection)
+                if (!blackInMovementMode && selectedPieceBlack != null) {
+                    // Enter movement mode
                     blackInMovementMode = true;
                     blackPendingDx = 0;
                     blackPendingDy = 0;
+                    initializeVisualPosition(Command.Player.BLACK);
                     System.out.println("Black player entered movement mode");
-                } else {
+                } else if (blackInMovementMode) {
                     // Execute accumulated move if exists
                     if ((blackPendingDx != 0 || blackPendingDy != 0) && selectedPieceBlack != null) {
                         Piece piece = pieces.get(selectedPieceBlack);
@@ -400,12 +449,19 @@ public class Game {
                     blackInMovementMode = false;
                     blackPendingDx = 0;
                     blackPendingDy = 0;
+                    blackVisualX = -1; // Reset visual position
+                    blackVisualY = -1;
+                    System.out.println("Black player exited movement mode");
                 }
                 break;
             case KeyEvent.VK_ESCAPE:
                 // Exit movement modes
                 whiteInMovementMode = false;
                 blackInMovementMode = false;
+                whiteVisualX = -1; // Reset visual positions
+                whiteVisualY = -1;
+                blackVisualX = -1;
+                blackVisualY = -1;
                 Command command = Command.createGameControl("END_GAME");
                 executeCommand(command);
                 break;
@@ -416,6 +472,8 @@ public class Game {
                     selectPieceWithDirection(Command.Player.WHITE, "UP");
                 } else {
                     whitePendingDy--;
+                    updateVisualPosition(Command.Player.WHITE);
+                    frame.repaint(); // Immediate visual feedback
                 }
                 break;
             case KeyEvent.VK_S:
@@ -423,6 +481,8 @@ public class Game {
                     selectPieceWithDirection(Command.Player.WHITE, "DOWN");
                 } else {
                     whitePendingDy++;
+                    updateVisualPosition(Command.Player.WHITE);
+                    frame.repaint(); // Immediate visual feedback
                     System.out.println("White player pending move: dx=" + whitePendingDx + ", dy=" + whitePendingDy);
                 }
                 break;
@@ -431,6 +491,8 @@ public class Game {
                     selectPieceWithDirection(Command.Player.WHITE, "LEFT");
                 } else {
                     whitePendingDx--;
+                    updateVisualPosition(Command.Player.WHITE);
+                    frame.repaint(); // Immediate visual feedback
                     System.out.println("White player pending move: dx=" + whitePendingDx + ", dy=" + whitePendingDy);
                 }
                 break;
@@ -439,6 +501,8 @@ public class Game {
                     selectPieceWithDirection(Command.Player.WHITE, "RIGHT");
                 } else {
                     whitePendingDx++;
+                    updateVisualPosition(Command.Player.WHITE);
+                    frame.repaint(); // Immediate visual feedback
                     System.out.println("White player pending move: dx=" + whitePendingDx + ", dy=" + whitePendingDy);
                 }
                 break;
@@ -449,6 +513,8 @@ public class Game {
                     selectPieceWithDirection(Command.Player.BLACK, "UP");
                 } else {
                     blackPendingDy--;
+                    updateVisualPosition(Command.Player.BLACK);
+                    frame.repaint(); // Immediate visual feedback
                 }
                 break;
             case KeyEvent.VK_DOWN:
@@ -456,6 +522,8 @@ public class Game {
                     selectPieceWithDirection(Command.Player.BLACK, "DOWN");
                 } else {
                     blackPendingDy++;
+                    updateVisualPosition(Command.Player.BLACK);
+                    frame.repaint(); // Immediate visual feedback
                     System.out.println("Black player pending move: dx=" + blackPendingDx + ", dy=" + blackPendingDy);
                 }
                 break;
@@ -464,6 +532,8 @@ public class Game {
                     selectPieceWithDirection(Command.Player.BLACK, "LEFT");
                 } else {
                     blackPendingDx--;
+                    updateVisualPosition(Command.Player.BLACK);
+                    frame.repaint(); // Immediate visual feedback
                     System.out.println("Black player pending move: dx=" + blackPendingDx + ", dy=" + blackPendingDy);
                 }
                 break;
@@ -472,6 +542,8 @@ public class Game {
                     selectPieceWithDirection(Command.Player.BLACK, "RIGHT");
                 } else {
                     blackPendingDx++;
+                    updateVisualPosition(Command.Player.BLACK);
+                    frame.repaint(); // Immediate visual feedback
                     System.out.println("Black player pending move: dx=" + blackPendingDx + ", dy=" + blackPendingDy);
                 }
                 break;
@@ -489,7 +561,7 @@ public class Game {
         // Continue with remaining cases
         switch (keyCode) {
             // Hover to Selection conversion
-            case KeyEvent.VK_V:
+            case KeyEvent.VK_C:
                 // White player: Convert current hover to selection
                 if (hoveredPieceWhite != null && pieces.get(hoveredPieceWhite).isWhite()) {
                     selectedPieceWhite = hoveredPieceWhite;
@@ -498,8 +570,17 @@ public class Game {
                     logger.logCommand(selectCommand);
                 }
                 break;
-            case KeyEvent.VK_M:
+            case KeyEvent.VK_V:
                 // Black player: Convert current hover to selection
+                if (hoveredPieceBlack != null && !pieces.get(hoveredPieceBlack).isWhite()) {
+                    selectedPieceBlack = hoveredPieceBlack;
+                    System.out.println("Black selected from hover: " + selectedPieceBlack);
+                    Command selectCommand = Command.createGameControl("SELECT_FROM_HOVER:" + selectedPieceBlack);
+                    logger.logCommand(selectCommand);
+                }
+                break;
+            case KeyEvent.VK_M:
+                // Legacy key for black player selection (keeping for compatibility)
                 if (hoveredPieceBlack != null && !pieces.get(hoveredPieceBlack).isWhite()) {
                     selectedPieceBlack = hoveredPieceBlack;
                     System.out.println("Black selected from hover: " + selectedPieceBlack);

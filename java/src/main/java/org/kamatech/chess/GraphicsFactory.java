@@ -188,6 +188,8 @@ public class GraphicsFactory implements IGraphicsFactory {
     public static void drawGameBoard(Graphics2D g2d, Board board, Map<String, Piece> pieces,
             String hoveredPieceWhite, String hoveredPieceBlack,
             String selectedPieceWhite, String selectedPieceBlack,
+            boolean whiteInMovementMode, boolean blackInMovementMode,
+            double whiteVisualX, double whiteVisualY, double blackVisualX, double blackVisualY,
             int panelWidth, int panelHeight) {
         // Draw board background
         g2d.drawImage(board.getImage().getImage(), 0, 0, panelWidth, panelHeight, null);
@@ -199,7 +201,9 @@ public class GraphicsFactory implements IGraphicsFactory {
         // Draw all pieces
         drawAllPieces(g2d, pieces, cellWidth, cellHeight,
                 hoveredPieceWhite, hoveredPieceBlack,
-                selectedPieceWhite, selectedPieceBlack);
+                selectedPieceWhite, selectedPieceBlack,
+                whiteInMovementMode, blackInMovementMode,
+                whiteVisualX, whiteVisualY, blackVisualX, blackVisualY);
     }
 
     /**
@@ -207,7 +211,9 @@ public class GraphicsFactory implements IGraphicsFactory {
      */
     private static void drawAllPieces(Graphics2D g2d, Map<String, Piece> pieces, int cellWidth, int cellHeight,
             String hoveredPieceWhite, String hoveredPieceBlack,
-            String selectedPieceWhite, String selectedPieceBlack) {
+            String selectedPieceWhite, String selectedPieceBlack,
+            boolean whiteInMovementMode, boolean blackInMovementMode,
+            double whiteVisualX, double whiteVisualY, double blackVisualX, double blackVisualY) {
         // FIRST: Draw all pieces with sprites and hover effects
         for (Map.Entry<String, Piece> entry : pieces.entrySet()) {
             String key = entry.getKey();
@@ -241,7 +247,9 @@ public class GraphicsFactory implements IGraphicsFactory {
         }
 
         // SECOND: Draw selection borders
-        drawSelectionBorders(g2d, pieces, cellWidth, cellHeight, selectedPieceWhite, selectedPieceBlack);
+        drawSelectionBorders(g2d, pieces, cellWidth, cellHeight, selectedPieceWhite, selectedPieceBlack,
+                whiteInMovementMode, blackInMovementMode,
+                whiteVisualX, whiteVisualY, blackVisualX, blackVisualY);
     }
 
     /**
@@ -261,12 +269,26 @@ public class GraphicsFactory implements IGraphicsFactory {
      * Draw selection borders for selected pieces
      */
     private static void drawSelectionBorders(Graphics2D g2d, Map<String, Piece> pieces, int cellWidth, int cellHeight,
-            String selectedPieceWhite, String selectedPieceBlack) {
+            String selectedPieceWhite, String selectedPieceBlack,
+            boolean whiteInMovementMode, boolean blackInMovementMode,
+            double whiteVisualX, double whiteVisualY, double blackVisualX, double blackVisualY) {
         for (Map.Entry<String, Piece> entry : pieces.entrySet()) {
             String key = entry.getKey();
             Piece piece = entry.getValue();
-            int x = (int) (piece.getX() * cellWidth);
-            int y = (int) (piece.getY() * cellHeight);
+
+            // Calculate piece position - use visual position if in movement mode, otherwise
+            // real position
+            int x, y;
+            if (key.equals(selectedPieceWhite) && whiteInMovementMode && whiteVisualX >= 0) {
+                x = (int) (whiteVisualX * cellWidth);
+                y = (int) (whiteVisualY * cellHeight);
+            } else if (key.equals(selectedPieceBlack) && blackInMovementMode && blackVisualX >= 0) {
+                x = (int) (blackVisualX * cellWidth);
+                y = (int) (blackVisualY * cellHeight);
+            } else {
+                x = (int) (piece.getX() * cellWidth);
+                y = (int) (piece.getY() * cellHeight);
+            }
 
             // Draw selection borders based on the actual piece color property, not its ID
             // White player can only highlight white pieces
