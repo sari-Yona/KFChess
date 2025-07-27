@@ -8,6 +8,7 @@ import org.kamatech.chess.listeners.*;
 import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.*;
+import javax.imageio.ImageIO;
 import java.util.List;
 
 /**
@@ -43,6 +44,9 @@ public class Game {
     // Visual position tracking for real-time feedback
     private double whiteVisualX = -1, whiteVisualY = -1; // Visual position for white piece
     private double blackVisualX = -1, blackVisualY = -1; // Visual position for black piece
+    
+    // Background image
+    private java.awt.image.BufferedImage backgroundImage;
 
     private void updateVisualPosition(Command.Player player) {
         try {
@@ -125,8 +129,19 @@ public class Game {
         this.frame.addKeyListener(new InputHandler(this));
         this.frame.setFocusable(true);
 
-        // Create main panel with BorderLayout
-        JPanel mainPanel = new JPanel(new BorderLayout());
+        // Create main panel with BorderLayout and background
+        JPanel mainPanel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+
+                // Draw background image scaled to panel size
+                if (backgroundImage != null) {
+                    g2d.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+        };
 
         // Create AnimationListener and subscribe to events
         this.animationListener = new AnimationListener(frame, mainPanel);
@@ -145,12 +160,22 @@ public class Game {
             }
         });
 
-        // Create game board panel (center)
+        // Create game board panel (center) - transparent to show background
         JPanel gameBoardPanel = new JPanel() {
             @Override
             protected void paintComponent(java.awt.Graphics g) {
-                super.paintComponent(g);
+                // Don't call super.paintComponent to keep transparency
                 Graphics2D g2d = (Graphics2D) g;
+
+                // Calculate center position for the board
+                int panelWidth = getWidth();
+                int panelHeight = getHeight();
+                int boardSize = 800;
+                int centerX = (panelWidth - boardSize) / 2;
+                int centerY = (panelHeight - boardSize) / 2;
+
+                // Translate graphics to center the board
+                g2d.translate(centerX, centerY);
 
                 // Use GraphicsFactory to draw everything - centered in 800x800 area
                 GraphicsFactory.drawGameBoard(g2d, board, pieces,
@@ -158,24 +183,39 @@ public class Game {
                         selectedPieceWhite, selectedPieceBlack,
                         whiteInMovementMode, blackInMovementMode,
                         whiteVisualX, whiteVisualY, blackVisualX, blackVisualY,
-                        800, 800);
+                        boardSize, boardSize);
+
+                // Reset translation
+                g2d.translate(-centerX, -centerY);
             }
         };
-        gameBoardPanel.setPreferredSize(new Dimension(800, 800));
+        gameBoardPanel.setOpaque(false); // Make transparent to show background
 
-        // Create left panel for black player moves
+        // Create left panel for black player moves - transparent to show background
         JPanel leftPanel = new JPanel(new BorderLayout());
-        leftPanel.setPreferredSize(new Dimension(200, 800));
+        leftPanel.setOpaque(false); // Make transparent to show background
+        leftPanel.setPreferredSize(new Dimension(150, 800)); // Reduced width for better centering
         leftPanel.setBorder(BorderFactory.createTitledBorder("Black Player Moves"));
         JScrollPane blackScrollPane = new JScrollPane(moveTableListener.getBlackTable());
+        blackScrollPane.setOpaque(false); // Make scroll pane transparent
+        blackScrollPane.getViewport().setOpaque(false); // Make viewport transparent
+        // Make the table itself transparent
+        moveTableListener.getBlackTable().setOpaque(false);
+        moveTableListener.getBlackTable().setShowGrid(false);
         leftPanel.add(blackScrollPane, BorderLayout.CENTER);
         leftPanel.add(moveTableListener.getBlackScoreLabel(), BorderLayout.SOUTH);
 
-        // Create right panel for white player moves
+        // Create right panel for white player moves - transparent to show background
         JPanel rightPanel = new JPanel(new BorderLayout());
-        rightPanel.setPreferredSize(new Dimension(200, 800));
+        rightPanel.setOpaque(false); // Make transparent to show background
+        rightPanel.setPreferredSize(new Dimension(150, 800)); // Reduced width for better centering
         rightPanel.setBorder(BorderFactory.createTitledBorder("White Player Moves"));
         JScrollPane whiteScrollPane = new JScrollPane(moveTableListener.getWhiteTable());
+        whiteScrollPane.setOpaque(false); // Make scroll pane transparent
+        whiteScrollPane.getViewport().setOpaque(false); // Make viewport transparent
+        // Make the table itself transparent
+        moveTableListener.getWhiteTable().setOpaque(false);
+        moveTableListener.getWhiteTable().setShowGrid(false);
         rightPanel.add(whiteScrollPane, BorderLayout.CENTER);
         rightPanel.add(moveTableListener.getWhiteScoreLabel(), BorderLayout.SOUTH);
 
@@ -185,6 +225,9 @@ public class Game {
         mainPanel.add(rightPanel, BorderLayout.EAST);
 
         this.frame.add(mainPanel);
+
+        // Load background image
+        loadBackgroundImage();
 
         initializeGame();
     }
@@ -205,6 +248,33 @@ public class Game {
         } catch (Exception e) {
             // Fall back to default pieces
             pieces.putAll(pieceFactory.createDefaultPieces());
+        }
+    }
+
+    /**
+     * Load background image from resources
+     */
+    private void loadBackgroundImage() {
+        try {
+            String backgroundPath = "c:\\הנדסאים\\CTD25\\java\\src\\main\\resources\\background.png";
+            backgroundImage = ImageIO.read(new File(backgroundPath));
+            System.out.println("Background image loaded successfully from: " + backgroundPath);
+        } catch (Exception e) {
+            System.out.println("Could not load background image: " + e.getMessage());
+            // Create a simple gradient background if image loading fails
+            backgroundImage = new java.awt.image.BufferedImage(1200, 1200, java.awt.image.BufferedImage.TYPE_INT_RGB);
+            java.awt.Graphics2D g2d = backgroundImage.createGraphics();
+            
+            // Create a gradient from dark blue to light blue
+            java.awt.GradientPaint gradient = new java.awt.GradientPaint(
+                0, 0, new java.awt.Color(30, 60, 120),
+                1200, 1200, new java.awt.Color(100, 150, 200)
+            );
+            g2d.setPaint(gradient);
+            g2d.fillRect(0, 0, 1200, 1200);
+            g2d.dispose();
+            
+            System.out.println("Created default gradient background");
         }
     }
 
@@ -1156,8 +1226,8 @@ public class Game {
                     capturer);
             logger.logCapture(capturer, logCaptured, captureCommand);
 
-            // Set piece to jump state (celebrating capture)
-            movingPiece.getState().setState(State.PieceState.JUMP);
+            // Set piece to rest state after capture (like after regular move)
+            movingPiece.getState().setState(State.PieceState.REST);
 
             System.out.println(String.format("%s captured %s!", logKey, logCaptured));
 
