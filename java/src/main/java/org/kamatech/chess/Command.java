@@ -379,11 +379,15 @@ public class Command {
      */
     public static java.util.List<String> getPlayerPieces(Player player, java.util.Map<String, ?> pieces) {
         java.util.List<String> playerPieces = new java.util.ArrayList<>();
-        String playerMarker = (player == Player.WHITE) ? "W" : "B";
+        boolean isWhitePlayer = (player == Player.WHITE);
 
         for (String pieceId : pieces.keySet()) {
-            if (pieceId.contains(playerMarker)) {
-                playerPieces.add(pieceId);
+            Object pieceObj = pieces.get(pieceId);
+            if (pieceObj instanceof Piece) {
+                Piece piece = (Piece)pieceObj;
+                if (isWhitePlayer == piece.isWhite()) {
+                    playerPieces.add(pieceId);
+                }
             }
         }
 

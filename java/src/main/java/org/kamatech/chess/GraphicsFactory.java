@@ -271,11 +271,14 @@ public class GraphicsFactory implements IGraphicsFactory {
             int x = (int) (piece.getX() * cellWidth);
             int y = (int) (piece.getY() * cellHeight);
 
-            // Draw selection borders
-            if (key.equals(selectedPieceWhite)) {
+            // Draw selection borders based on the actual piece color property, not its ID
+            // White player can only highlight white pieces
+            if (key.equals(selectedPieceWhite) && piece.isWhite()) {
                 drawSelectionBorder(g2d, x, y, cellWidth, cellHeight, true);
             }
-            if (key.equals(selectedPieceBlack)) {
+            
+            // Black player can only highlight black pieces
+            if (key.equals(selectedPieceBlack) && !piece.isWhite()) {
                 drawSelectionBorder(g2d, x, y, cellWidth, cellHeight, false);
             }
         }

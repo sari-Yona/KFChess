@@ -157,15 +157,7 @@ public class Game {
 
             logger.logCommand(Command.createGameControl("GAME_INITIALIZED"));
 
-            // Initialize hover to first piece of each player
-            List<String> whitePieces = Command.getPlayerPieces(Command.Player.WHITE, pieces);
-            List<String> blackPieces = Command.getPlayerPieces(Command.Player.BLACK, pieces);
-            if (!whitePieces.isEmpty()) {
-                hoveredPieceWhite = whitePieces.get(0);
-            }
-            if (!blackPieces.isEmpty()) {
-                hoveredPieceBlack = blackPieces.get(0);
-            }
+            // Note: hover and selection initialization will be done in autoSelectFirstPieces()
 
         } catch (Exception e) {
             // Fall back to default pieces
@@ -215,27 +207,29 @@ public class Game {
     }
 
     /**
-     * Auto-select the first piece for each player
+     * Auto-select the first piece for each player using the same logic as hover initialization
      */
     private void autoSelectFirstPieces() {
-        // Find first white piece (contains W in the name)
-        for (Map.Entry<String, Piece> entry : pieces.entrySet()) {
-            String pieceId = entry.getKey();
-            if (pieceId.contains("W")) {
-                selectedPieceWhite = pieceId;
-                entry.getValue().getState().setState(State.PieceState.IDLE);
-                break;
-            }
+        // Use the same logic as initializeGame to ensure consistency
+        List<String> whitePieces = Command.getPlayerPieces(Command.Player.WHITE, pieces);
+        List<String> blackPieces = Command.getPlayerPieces(Command.Player.BLACK, pieces);
+        
+        // Select and hover the same pieces for white player
+        if (!whitePieces.isEmpty()) {
+            String firstWhitePiece = whitePieces.get(0);
+            selectedPieceWhite = firstWhitePiece;
+            hoveredPieceWhite = firstWhitePiece;
+            pieces.get(firstWhitePiece).getState().setState(State.PieceState.IDLE);
+            System.out.println("Initialized white player: selected and hovered = " + firstWhitePiece);
         }
 
-        // Find first black piece (contains B in the name)
-        for (Map.Entry<String, Piece> entry : pieces.entrySet()) {
-            String pieceId = entry.getKey();
-            if (pieceId.contains("B")) {
-                selectedPieceBlack = pieceId;
-                entry.getValue().getState().setState(State.PieceState.IDLE);
-                break;
-            }
+        // Select and hover the same pieces for black player
+        if (!blackPieces.isEmpty()) {
+            String firstBlackPiece = blackPieces.get(0);
+            selectedPieceBlack = firstBlackPiece;
+            hoveredPieceBlack = firstBlackPiece;
+            pieces.get(firstBlackPiece).getState().setState(State.PieceState.IDLE);
+            System.out.println("Initialized black player: selected and hovered = " + firstBlackPiece);
         }
     }
 
@@ -495,7 +489,7 @@ public class Game {
             // Hover to Selection conversion
             case KeyEvent.VK_V:
                 // White player: Convert current hover to selection
-                if (hoveredPieceWhite != null) {
+                if (hoveredPieceWhite != null && pieces.get(hoveredPieceWhite).isWhite()) {
                     selectedPieceWhite = hoveredPieceWhite;
                     System.out.println("White selected from hover: " + selectedPieceWhite);
                     Command selectCommand = Command.createGameControl("SELECT_FROM_HOVER:" + selectedPieceWhite);
@@ -504,7 +498,7 @@ public class Game {
                 break;
             case KeyEvent.VK_M:
                 // Black player: Convert current hover to selection
-                if (hoveredPieceBlack != null) {
+                if (hoveredPieceBlack != null && !pieces.get(hoveredPieceBlack).isWhite()) {
                     selectedPieceBlack = hoveredPieceBlack;
                     System.out.println("Black selected from hover: " + selectedPieceBlack);
                     Command selectCommand = Command.createGameControl("SELECT_FROM_HOVER:" + selectedPieceBlack);
@@ -643,6 +637,7 @@ public class Game {
      * Select next piece for a player using direction keys
      */
     private void selectPieceWithDirection(Command.Player player, String direction) {
+        // Get pieces for this player only, ensuring correct color match
         List<String> playerPieces = Command.getPlayerPieces(player, pieces);
         if (playerPieces.isEmpty())
             return;
@@ -668,6 +663,15 @@ public class Game {
         }
 
         String newSelectedPiece = playerPieces.get(currentIndex);
+        
+        // Double-check the piece color matches the player before assigning
+        boolean pieceColorMatches = (player == Command.Player.WHITE && newSelectedPiece.contains("W")) ||
+                                   (player == Command.Player.BLACK && newSelectedPiece.contains("B"));
+                                   
+        if (!pieceColorMatches) {
+            System.out.println("ERROR: Attempted to select piece of wrong color: " + newSelectedPiece);
+            return;
+        }
 
         if (player == Command.Player.WHITE) {
             hoveredPieceWhite = newSelectedPiece; // Update hovered piece first
@@ -688,6 +692,7 @@ public class Game {
      * Move hover between pieces without selecting
      */
     private void hoverPieceWithDirection(Command.Player player, String direction) {
+        // Ensure we only get pieces of the appropriate color
         List<String> playerPieces = Command.getPlayerPieces(player, pieces);
         if (playerPieces.isEmpty())
             return;
@@ -713,6 +718,15 @@ public class Game {
         }
 
         String newHoveredPiece = playerPieces.get(currentIndex);
+        
+        // Double-check the piece color matches the player before hovering
+        boolean pieceColorMatches = (player == Command.Player.WHITE && newHoveredPiece.contains("W")) ||
+                                   (player == Command.Player.BLACK && newHoveredPiece.contains("B"));
+                                   
+        if (!pieceColorMatches) {
+            System.out.println("ERROR: Attempted to hover over piece of wrong color: " + newHoveredPiece);
+            return;
+        }
 
         if (player == Command.Player.WHITE) {
             hoveredPieceWhite = newHoveredPiece;
