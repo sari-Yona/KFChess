@@ -405,14 +405,11 @@ public class Game {
                 } else if (whiteInMovementMode) {
                     // Execute accumulated move if exists
                     if ((whitePendingDx != 0 || whitePendingDy != 0) && selectedPieceWhite != null) {
-                        Piece piece = pieces.get(selectedPieceWhite);
-
                         // Create move command for validation and execution
                         Command moveCommand = Command.createKeyInput("MOVE", Command.Player.WHITE);
                         executeCommand(moveCommand);
 
-                        // Set to REST state after move
-                        piece.getState().setState(State.PieceState.REST);
+                        // Note: State will be managed by the animation in movePieceStepByStep
                     }
                     // Exit movement mode
                     whiteInMovementMode = false;
@@ -436,14 +433,11 @@ public class Game {
                 } else if (blackInMovementMode) {
                     // Execute accumulated move if exists
                     if ((blackPendingDx != 0 || blackPendingDy != 0) && selectedPieceBlack != null) {
-                        Piece piece = pieces.get(selectedPieceBlack);
-
                         // Create move command for validation and execution
                         Command moveCommand = Command.createKeyInput("MOVE", Command.Player.BLACK);
                         executeCommand(moveCommand);
 
-                        // Set to REST state after move
-                        piece.getState().setState(State.PieceState.REST);
+                        // Note: State will be managed by the animation in movePieceStepByStep
                     }
                     // Exit movement mode
                     blackInMovementMode = false;
