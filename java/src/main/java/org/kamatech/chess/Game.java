@@ -1,7 +1,9 @@
 package org.kamatech.chess;
 
 import javax.swing.*;
+import javax.swing.border.*;
 import java.awt.*;
+import java.awt.geom.*;
 import org.kamatech.chess.api.*;
 import org.kamatech.chess.events.*;
 import org.kamatech.chess.listeners.*;
@@ -44,7 +46,7 @@ public class Game {
     // Visual position tracking for real-time feedback
     private double whiteVisualX = -1, whiteVisualY = -1; // Visual position for white piece
     private double blackVisualX = -1, blackVisualY = -1; // Visual position for black piece
-    
+
     // Background image
     private java.awt.image.BufferedImage backgroundImage;
 
@@ -191,33 +193,89 @@ public class Game {
         };
         gameBoardPanel.setOpaque(false); // Make transparent to show background
 
-        // Create left panel for black player moves - transparent to show background
+        // Create left panel for black player moves - Fully Transparent
         JPanel leftPanel = new JPanel(new BorderLayout());
-        leftPanel.setOpaque(false); // Make transparent to show background
-        leftPanel.setPreferredSize(new Dimension(150, 800)); // Reduced width for better centering
-        leftPanel.setBorder(BorderFactory.createTitledBorder("Black Player Moves"));
-        JScrollPane blackScrollPane = new JScrollPane(moveTableListener.getBlackTable());
-        blackScrollPane.setOpaque(false); // Make scroll pane transparent
-        blackScrollPane.getViewport().setOpaque(false); // Make viewport transparent
-        // Make the table itself transparent
-        moveTableListener.getBlackTable().setOpaque(false);
-        moveTableListener.getBlackTable().setShowGrid(false);
-        leftPanel.add(blackScrollPane, BorderLayout.CENTER);
-        leftPanel.add(moveTableListener.getBlackScoreLabel(), BorderLayout.SOUTH);
+        leftPanel.setOpaque(false);
+        leftPanel.setPreferredSize(new Dimension(250, 800)); // Much wider for expanded content
 
-        // Create right panel for white player moves - transparent to show background
+        // Create custom titled border with enhanced gamer styling
+        TitledBorder blackBorder = new TitledBorder(new EmptyBorder(15, 15, 15, 15), "⚫ BLACK COMMANDER",
+                TitledBorder.CENTER, TitledBorder.TOP,
+                new Font("Orbitron", Font.BOLD, 16),
+                new Color(255, 100, 255));
+        leftPanel.setBorder(blackBorder);
+
+        JScrollPane blackScrollPane = new JScrollPane(moveTableListener.getBlackTable());
+        blackScrollPane.setOpaque(false);
+        blackScrollPane.getViewport().setOpaque(false);
+        blackScrollPane.setBorder(new EmptyBorder(8, 8, 8, 8));
+
+        // Enhanced table styling with transparent background
+        JTable blackTable = moveTableListener.getBlackTable();
+        blackTable.setOpaque(false);
+        blackTable.setShowGrid(true);
+        blackTable.setGridColor(new Color(255, 100, 255, 120));
+        blackTable.setForeground(new Color(255, 220, 255));
+        blackTable.setFont(new Font("Consolas", Font.BOLD, 13));
+        blackTable.setRowHeight(30); // Taller rows for better readability
+        blackTable.setIntercellSpacing(new Dimension(5, 3)); // Better cell spacing
+        blackTable.getTableHeader().setOpaque(false);
+        blackTable.getTableHeader().setBackground(new Color(0, 0, 0, 0)); // Fully transparent
+        blackTable.getTableHeader().setForeground(new Color(255, 150, 255));
+        blackTable.getTableHeader().setFont(new Font("Orbitron", Font.BOLD, 12));
+        blackTable.getTableHeader().setPreferredSize(new Dimension(0, 35)); // Taller header
+
+        leftPanel.add(blackScrollPane, BorderLayout.CENTER);
+
+        // Enhanced score label with glow effect
+        JLabel blackScore = moveTableListener.getBlackScoreLabel();
+        blackScore.setForeground(new Color(255, 120, 255));
+        blackScore.setFont(new Font("Orbitron", Font.BOLD, 18));
+        blackScore.setHorizontalAlignment(SwingConstants.CENTER);
+        blackScore.setBorder(new EmptyBorder(10, 0, 10, 0));
+        leftPanel.add(blackScore, BorderLayout.SOUTH);
+
+        // Create right panel for white player moves - Fully Transparent
         JPanel rightPanel = new JPanel(new BorderLayout());
-        rightPanel.setOpaque(false); // Make transparent to show background
-        rightPanel.setPreferredSize(new Dimension(150, 800)); // Reduced width for better centering
-        rightPanel.setBorder(BorderFactory.createTitledBorder("White Player Moves"));
+        rightPanel.setOpaque(false);
+        rightPanel.setPreferredSize(new Dimension(250, 800)); // Much wider for expanded content
+
+        // Create custom titled border with enhanced gamer styling
+        TitledBorder whiteBorder = new TitledBorder(new EmptyBorder(15, 15, 15, 15), "⚪ WHITE COMMANDER",
+                TitledBorder.CENTER, TitledBorder.TOP,
+                new Font("Orbitron", Font.BOLD, 16),
+                new Color(100, 255, 255));
+        rightPanel.setBorder(whiteBorder);
+
         JScrollPane whiteScrollPane = new JScrollPane(moveTableListener.getWhiteTable());
-        whiteScrollPane.setOpaque(false); // Make scroll pane transparent
-        whiteScrollPane.getViewport().setOpaque(false); // Make viewport transparent
-        // Make the table itself transparent
-        moveTableListener.getWhiteTable().setOpaque(false);
-        moveTableListener.getWhiteTable().setShowGrid(false);
+        whiteScrollPane.setOpaque(false);
+        whiteScrollPane.getViewport().setOpaque(false);
+        whiteScrollPane.setBorder(new EmptyBorder(8, 8, 8, 8));
+
+        // Enhanced table styling with transparent background
+        JTable whiteTable = moveTableListener.getWhiteTable();
+        whiteTable.setOpaque(false);
+        whiteTable.setShowGrid(true);
+        whiteTable.setGridColor(new Color(100, 255, 255, 120));
+        whiteTable.setForeground(new Color(220, 255, 255));
+        whiteTable.setFont(new Font("Consolas", Font.BOLD, 13));
+        whiteTable.setRowHeight(30); // Taller rows for better readability
+        whiteTable.setIntercellSpacing(new Dimension(5, 3)); // Better cell spacing
+        whiteTable.getTableHeader().setOpaque(false);
+        whiteTable.getTableHeader().setBackground(new Color(0, 0, 0, 0)); // Fully transparent
+        whiteTable.getTableHeader().setForeground(new Color(150, 255, 255));
+        whiteTable.getTableHeader().setFont(new Font("Orbitron", Font.BOLD, 12));
+        whiteTable.getTableHeader().setPreferredSize(new Dimension(0, 35)); // Taller header
+
         rightPanel.add(whiteScrollPane, BorderLayout.CENTER);
-        rightPanel.add(moveTableListener.getWhiteScoreLabel(), BorderLayout.SOUTH);
+
+        // Enhanced score label with glow effect
+        JLabel whiteScore = moveTableListener.getWhiteScoreLabel();
+        whiteScore.setForeground(new Color(120, 255, 255));
+        whiteScore.setFont(new Font("Orbitron", Font.BOLD, 18));
+        whiteScore.setHorizontalAlignment(SwingConstants.CENTER);
+        whiteScore.setBorder(new EmptyBorder(10, 0, 10, 0));
+        rightPanel.add(whiteScore, BorderLayout.SOUTH);
 
         // Add panels to main panel
         mainPanel.add(leftPanel, BorderLayout.WEST);
@@ -264,16 +322,15 @@ public class Game {
             // Create a simple gradient background if image loading fails
             backgroundImage = new java.awt.image.BufferedImage(1200, 1200, java.awt.image.BufferedImage.TYPE_INT_RGB);
             java.awt.Graphics2D g2d = backgroundImage.createGraphics();
-            
+
             // Create a gradient from dark blue to light blue
             java.awt.GradientPaint gradient = new java.awt.GradientPaint(
-                0, 0, new java.awt.Color(30, 60, 120),
-                1200, 1200, new java.awt.Color(100, 150, 200)
-            );
+                    0, 0, new java.awt.Color(30, 60, 120),
+                    1200, 1200, new java.awt.Color(100, 150, 200));
             g2d.setPaint(gradient);
             g2d.fillRect(0, 0, 1200, 1200);
             g2d.dispose();
-            
+
             System.out.println("Created default gradient background");
         }
     }
@@ -772,13 +829,13 @@ public class Game {
         } else {
             // Move piece to landing (no capture)
             piece.setPosition(nextX, nextY);
-            
+
             // Check for pawn promotion after jump
             if (shouldPromotePawn(piece, nextY)) {
                 promotePawnToQueen(pieceId, piece);
                 return; // Exit early since piece was replaced
             }
-            
+
             // Publish jump event without capture
             publishMoveEvent(piece, currentX, currentY, nextX, nextY, null);
         }
@@ -983,14 +1040,14 @@ public class Game {
                 } catch (InterruptedException e) {
                     // Handle interruption if needed
                     piece.setPosition(nextX, nextY);
-                    
+
                     // Check for pawn promotion even if interrupted
                     if (shouldPromotePawn(piece, nextY)) {
                         String movingKey = getPieceIdFromPiece(piece);
                         promotePawnToQueen(movingKey, piece);
                         return; // Exit early since piece was replaced
                     }
-                    
+
                     piece.getState().setState(State.PieceState.REST);
                     frame.repaint();
                 }
@@ -1286,8 +1343,9 @@ public class Game {
      */
     private boolean shouldPromotePawn(Piece piece, double newY) {
         String pieceId = getPieceIdFromPiece(piece);
-        if (!pieceId.startsWith("P")) return false; // Only pawns can be promoted
-        
+        if (!pieceId.startsWith("P"))
+            return false; // Only pawns can be promoted
+
         boolean isWhite = piece.isWhite();
         return (isWhite && newY == 0) || (!isWhite && newY == 7);
     }
@@ -1299,16 +1357,16 @@ public class Game {
         try {
             // Create new queen at pawn's position
             String queenId = pawn.isWhite() ? "QW" : "QB";
-            Piece newQueen = pieceFactory.createPiece(queenId, (int)pawn.getX(), (int)pawn.getY());
-            
+            Piece newQueen = pieceFactory.createPiece(queenId, (int) pawn.getX(), (int) pawn.getY());
+
             if (newQueen != null) {
                 // Remove the pawn from pieces map
                 pieces.remove(pawnKey);
-                
+
                 // Add the new queen with a unique key
                 String newQueenKey = queenId + "_promoted_" + System.currentTimeMillis();
                 pieces.put(newQueenKey, newQueen);
-                
+
                 // Update selected piece if this was the selected pawn
                 if (pawnKey.equals(selectedPieceWhite)) {
                     selectedPieceWhite = newQueenKey;
@@ -1316,7 +1374,7 @@ public class Game {
                 if (pawnKey.equals(selectedPieceBlack)) {
                     selectedPieceBlack = newQueenKey;
                 }
-                
+
                 // Update hovered piece if this was the hovered pawn
                 if (pawnKey.equals(hoveredPieceWhite)) {
                     hoveredPieceWhite = newQueenKey;
@@ -1324,9 +1382,10 @@ public class Game {
                 if (pawnKey.equals(hoveredPieceBlack)) {
                     hoveredPieceBlack = newQueenKey;
                 }
-                
-                System.out.println("PAWN PROMOTION: " + pawnKey + " promoted to " + newQueenKey + " at (" + pawn.getX() + "," + pawn.getY() + ")");
-                
+
+                System.out.println("PAWN PROMOTION: " + pawnKey + " promoted to " + newQueenKey + " at (" + pawn.getX()
+                        + "," + pawn.getY() + ")");
+
                 // Force repaint to show the new queen
                 frame.repaint();
             } else {
