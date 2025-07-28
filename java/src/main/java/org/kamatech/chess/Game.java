@@ -806,6 +806,12 @@ public class Game {
         if (!pieces.containsKey(pieceId))
             return;
         Piece piece = pieces.get(pieceId);
+        
+        // Publish sound event for jump FIRST - always play sound regardless of outcome
+        SoundEvent jumpSound = new SoundEvent(SoundEvent.SoundType.JUMP);
+        System.out.println("DEBUG: Publishing JUMP sound event");
+        eventBus.publish(jumpSound);
+        
         // Determine pending jump deltas and reset
         int dx = (command.getPlayer() == Command.Player.WHITE) ? whitePendingDx : blackPendingDx;
         int dy = (command.getPlayer() == Command.Player.WHITE) ? whitePendingDy : blackPendingDy;
@@ -839,6 +845,7 @@ public class Game {
             // Publish jump event without capture
             publishMoveEvent(piece, currentX, currentY, nextX, nextY, null);
         }
+
         // Set jump state
         piece.getState().setState(State.PieceState.JUMP);
         System.out.println("Piece " + pieceId + " jumped to (" + nextX + "," + nextY + ")");

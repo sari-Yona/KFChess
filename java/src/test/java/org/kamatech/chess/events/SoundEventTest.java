@@ -33,6 +33,17 @@ public class SoundEventTest {
     }
 
     @Test
+    @DisplayName("יש לוודא שיצירת אירוע צליל קפיצה עובדת")
+    void testJumpSound() {
+        // Act
+        SoundEvent event = new SoundEvent(SoundEvent.SoundType.JUMP);
+
+        // Assert
+        assertEquals(SoundEvent.SoundType.JUMP, event.soundType, "סוג הצליל צריך להיות JUMP");
+        assertTrue(event.timestamp > 0, "הזמן צריך להיות מוגדר");
+    }
+
+    @Test
     @DisplayName("יש לוודא שזמני יצירה שונים לאירועים שונים")
     void testTimestampDifferences() throws InterruptedException {
         // Act
@@ -74,14 +85,17 @@ public class SoundEventTest {
     }
 
     @Test
-    @DisplayName("יש לוודא ששני סוגי הצלילים זמינים")
-    void testBothSoundTypesAvailable() {
+    @DisplayName("יש לוודא ששלושת סוגי הצלילים זמינים")
+    void testAllSoundTypesAvailable() {
         // Act & Assert
         assertNotNull(SoundEvent.SoundType.MOVE, "סוג צליל MOVE צריך להיות זמין");
+        assertNotNull(SoundEvent.SoundType.JUMP, "סוג צליל JUMP צריך להיות זמין");
         assertNotNull(SoundEvent.SoundType.EAT, "סוג צליל EAT צריך להיות זמין");
 
         // וודא שהם שונים
         assertNotEquals(SoundEvent.SoundType.MOVE, SoundEvent.SoundType.EAT, "סוגי הצלילים צריכים להיות שונים");
+        assertNotEquals(SoundEvent.SoundType.MOVE, SoundEvent.SoundType.JUMP, "סוגי הצלילים צריכים להיות שונים");
+        assertNotEquals(SoundEvent.SoundType.JUMP, SoundEvent.SoundType.EAT, "סוגי הצלילים צריכים להיות שונים");
     }
 
     @Test
@@ -91,15 +105,18 @@ public class SoundEventTest {
         SoundEvent event1 = new SoundEvent(SoundEvent.SoundType.MOVE);
         SoundEvent event2 = new SoundEvent(SoundEvent.SoundType.EAT);
         SoundEvent event3 = new SoundEvent(SoundEvent.SoundType.MOVE);
+        SoundEvent event4 = new SoundEvent(SoundEvent.SoundType.JUMP);
 
         // Assert
         assertEquals(SoundEvent.SoundType.MOVE, event1.soundType);
         assertEquals(SoundEvent.SoundType.EAT, event2.soundType);
         assertEquals(SoundEvent.SoundType.MOVE, event3.soundType);
+        assertEquals(SoundEvent.SoundType.JUMP, event4.soundType);
 
         // וודא שהם אירועים נפרדים
         assertNotSame(event1, event2, "אירועים שונים צריכים להיות עצמים נפרדים");
         assertNotSame(event1, event3, "גם אירועים מאותו סוג צריכים להיות עצמים נפרדים");
+        assertNotSame(event1, event4, "אירועי MOVE ו-JUMP צריכים להיות עצמים נפרדים");
     }
 
     @Test
