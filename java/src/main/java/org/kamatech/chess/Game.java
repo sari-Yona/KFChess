@@ -772,6 +772,13 @@ public class Game {
         } else {
             // Move piece to landing (no capture)
             piece.setPosition(nextX, nextY);
+            
+            // Check for pawn promotion after jump
+            if (shouldPromotePawn(piece, nextY)) {
+                promotePawnToQueen(pieceId, piece);
+                return; // Exit early since piece was replaced
+            }
+            
             // Publish jump event without capture
             publishMoveEvent(piece, currentX, currentY, nextX, nextY, null);
         }
@@ -960,6 +967,13 @@ public class Game {
                     // Ensure final position is exact
                     piece.setPosition(nextX, nextY);
 
+                    // Check for pawn promotion after move
+                    if (shouldPromotePawn(piece, nextY)) {
+                        String movingKey = getPieceIdFromPiece(piece);
+                        promotePawnToQueen(movingKey, piece);
+                        return; // Exit early since piece was replaced
+                    }
+
                     // Set back to REST state
                     piece.getState().setState(State.PieceState.REST);
 
@@ -969,6 +983,14 @@ public class Game {
                 } catch (InterruptedException e) {
                     // Handle interruption if needed
                     piece.setPosition(nextX, nextY);
+                    
+                    // Check for pawn promotion even if interrupted
+                    if (shouldPromotePawn(piece, nextY)) {
+                        String movingKey = getPieceIdFromPiece(piece);
+                        promotePawnToQueen(movingKey, piece);
+                        return; // Exit early since piece was replaced
+                    }
+                    
                     piece.getState().setState(State.PieceState.REST);
                     frame.repaint();
                 }
@@ -1207,6 +1229,12 @@ public class Game {
                 System.out.println("DEBUG: Moved piece " + movingKey + " to position " + targetPiece.getX() + ","
                         + targetPiece.getY());
 
+            // Check for pawn promotion after capture
+            if (shouldPromotePawn(movingPiece, targetPiece.getY())) {
+                promotePawnToQueen(movingKey, movingPiece);
+                return; // Exit early since piece was replaced
+            }
+
             // Publish sound event for eat
             SoundEvent eatSound = new SoundEvent(SoundEvent.SoundType.EAT);
             System.out.println("DEBUG: Publishing EAT sound event");
@@ -1251,6 +1279,63 @@ public class Game {
             }
         }
         return null;
+    }
+
+    /**
+     * Check if a pawn should be promoted to queen
+     */
+    private boolean shouldPromotePawn(Piece piece, double newY) {
+        String pieceId = getPieceIdFromPiece(piece);
+        if (!pieceId.startsWith("P")) return false; // Only pawns can be promoted
+        
+        boolean isWhite = piece.isWhite();
+        return (isWhite && newY == 0) || (!isWhite && newY == 7);
+    }
+
+    /**
+     * Promote a pawn to queen
+     */
+    private void promotePawnToQueen(String pawnKey, Piece pawn) {
+        try {
+            // Create new queen at pawn's position
+            String queenId = pawn.isWhite() ? "QW" : "QB";
+            Piece newQueen = pieceFactory.createPiece(queenId, (int)pawn.getX(), (int)pawn.getY());
+            
+            if (newQueen != null) {
+                // Remove the pawn from pieces map
+                pieces.remove(pawnKey);
+                
+                // Add the new queen with a unique key
+                String newQueenKey = queenId + "_promoted_" + System.currentTimeMillis();
+                pieces.put(newQueenKey, newQueen);
+                
+                // Update selected piece if this was the selected pawn
+                if (pawnKey.equals(selectedPieceWhite)) {
+                    selectedPieceWhite = newQueenKey;
+                }
+                if (pawnKey.equals(selectedPieceBlack)) {
+                    selectedPieceBlack = newQueenKey;
+                }
+                
+                // Update hovered piece if this was the hovered pawn
+                if (pawnKey.equals(hoveredPieceWhite)) {
+                    hoveredPieceWhite = newQueenKey;
+                }
+                if (pawnKey.equals(hoveredPieceBlack)) {
+                    hoveredPieceBlack = newQueenKey;
+                }
+                
+                System.out.println("PAWN PROMOTION: " + pawnKey + " promoted to " + newQueenKey + " at (" + pawn.getX() + "," + pawn.getY() + ")");
+                
+                // Force repaint to show the new queen
+                frame.repaint();
+            } else {
+                System.err.println("ERROR: Failed to create queen for promotion of " + pawnKey);
+            }
+        } catch (Exception e) {
+            System.err.println("ERROR: Exception during pawn promotion: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
