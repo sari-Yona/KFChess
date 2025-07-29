@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.reflect.Method;
-import java.util.Map;
 
 /**
  * Integration tests for pawn promotion in the game system

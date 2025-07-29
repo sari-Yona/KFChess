@@ -3,7 +3,6 @@ package org.kamatech.chess;
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
-import java.awt.geom.*;
 import org.kamatech.chess.api.*;
 import org.kamatech.chess.events.*;
 import org.kamatech.chess.listeners.*;
@@ -18,8 +17,6 @@ import java.util.List;
  * Manages board state, command processing, physics, and game flow
  */
 public class Game {
-    private static final boolean DEBUG = false; // Set to true for debug output
-
     private final Board board;
     private final Graphics graphics;
     private final Physics physics;
@@ -806,12 +803,11 @@ public class Game {
         if (!pieces.containsKey(pieceId))
             return;
         Piece piece = pieces.get(pieceId);
-        
+
         // Publish sound event for jump FIRST - always play sound regardless of outcome
         SoundEvent jumpSound = new SoundEvent(SoundEvent.SoundType.JUMP);
-        System.out.println("DEBUG: Publishing JUMP sound event");
         eventBus.publish(jumpSound);
-        
+
         // Determine pending jump deltas and reset
         int dx = (command.getPlayer() == Command.Player.WHITE) ? whitePendingDx : blackPendingDx;
         int dy = (command.getPlayer() == Command.Player.WHITE) ? whitePendingDy : blackPendingDy;
@@ -848,7 +844,6 @@ public class Game {
 
         // Set jump state
         piece.getState().setState(State.PieceState.JUMP);
-        System.out.println("Piece " + pieceId + " jumped to (" + nextX + "," + nextY + ")");
     }
 
     /**
@@ -887,18 +882,15 @@ public class Game {
                 (player == Command.Player.BLACK && newSelectedPiece.contains("B"));
 
         if (!pieceColorMatches) {
-            System.out.println("ERROR: Attempted to select piece of wrong color: " + newSelectedPiece);
             return;
         }
 
         if (player == Command.Player.WHITE) {
             hoveredPieceWhite = newSelectedPiece; // Update hovered piece first
             selectedPieceWhite = newSelectedPiece;
-            System.out.println("White hovering: " + hoveredPieceWhite + ", selected: " + selectedPieceWhite);
         } else {
             hoveredPieceBlack = newSelectedPiece; // Update hovered piece first
             selectedPieceBlack = newSelectedPiece;
-            System.out.println("Black hovering: " + hoveredPieceBlack + ", selected: " + selectedPieceBlack);
         }
 
         // Log the selection
@@ -966,35 +958,24 @@ public class Game {
         double nextX = currentX + dx;
         double nextY = currentY + dy;
 
-        System.out.println("DEBUG: Current position: (" + currentX + "," + currentY + ")");
-        System.out.println("DEBUG: Next position: (" + nextX + "," + nextY + ")");
-        System.out.println("DEBUG: Requested move: (" + dx + "," + dy + ")");
-
         // Check if this move is allowed by the piece's moves.txt file
         if (!isValidMoveForPiece(piece, dx, dy)) {
-            System.out.println("DEBUG: Move blocked - not allowed by piece movement rules!");
             return;
         }
 
         // Check board boundaries
         if (nextX < 0 || nextX >= board.getWidthCells() ||
                 nextY < 0 || nextY >= board.getHeightCells()) {
-            System.out.println("DEBUG: Move blocked - out of bounds!");
             return;
         }
 
         // Check for collisions with other pieces
         Piece collidingPiece = findPieceAt(nextX, nextY);
         if (collidingPiece != null && !collidingPiece.equals(piece)) {
-            System.out.println("DEBUG: Collision detected with " + collidingPiece.getId());
-
             // Check if this is a valid capture (different colors)
             if (piece.isWhite() != collidingPiece.isWhite()) {
-                System.out.println("DEBUG: Valid capture! " + piece.getId() + " can capture " + collidingPiece.getId());
                 handleCollision(piece, collidingPiece);
-                System.out.println("DEBUG: Capture completed!");
             } else {
-                System.out.println("DEBUG: Same color collision - move blocked!");
                 return;
             }
         } else {
@@ -1004,7 +985,6 @@ public class Game {
 
             // Publish sound event for move
             SoundEvent moveSound = new SoundEvent(SoundEvent.SoundType.MOVE);
-            System.out.println("DEBUG: Publishing MOVE sound event");
             eventBus.publish(moveSound);
 
             // Publish move event for regular move (no capture)
@@ -1059,8 +1039,6 @@ public class Game {
                     frame.repaint();
                 }
             }).start();
-
-            System.out.println("DEBUG: Piece " + piece.getId() + " moving to (" + nextX + "," + nextY + ")");
         }
 
         // No need for immediate repaint here as animation thread handles it
@@ -1136,7 +1114,6 @@ public class Game {
         // Get the piece's moves from its state
         State state = piece.getState();
         if (state == null || state.getMoves() == null) {
-            System.out.println("DEBUG: No moves defined for piece " + piece.getId() + ", allowing all moves");
             return true; // If no moves defined, allow all moves
         }
 
@@ -1144,11 +1121,8 @@ public class Game {
         List<String> movesList = moves.getAllowedMoves();
 
         if (movesList == null || movesList.isEmpty()) {
-            System.out.println("DEBUG: Empty moves list for piece " + piece.getId() + ", allowing all moves");
             return true; // If moves list is empty, allow all moves
         }
-
-        System.out.println("DEBUG: Checking moves for piece " + piece.getId() + ": " + movesList);
 
         // Check if the requested move matches any of the allowed moves
         for (String moveStr : movesList) {
@@ -1164,28 +1138,21 @@ public class Game {
 
                     // Check if this move matches the requested move
                     if (allowedDx == dx && allowedDy == dy) {
-                        System.out.println("DEBUG: Move (" + dx + "," + dy + ") is allowed for " + piece.getId());
                         return true;
                     }
 
                     // Also check negative direction (for bidirectional moves)
                     if (allowedDx == -dx && allowedDy == -dy) {
-                        System.out.println("DEBUG: Move (" + dx + "," + dy + ") is allowed (reverse direction) for "
-                                + piece.getId());
                         return true;
                     }
                 }
             } catch (NumberFormatException e) {
-                System.out.println("DEBUG: Invalid move format in moves.txt: " + moveStr);
+                // Invalid move format, skip
             }
         }
 
-        System.out.println("DEBUG: Move (" + dx + "," + dy + ") is NOT allowed for " + piece.getId());
-        System.out.println("DEBUG: Available moves: " + movesList);
-
         // Temporary fallback - allow basic moves for common pieces
         String pieceType = piece.getId().substring(0, 1);
-        System.out.println("DEBUG: Piece type: " + pieceType + ", trying fallback moves");
 
         switch (pieceType) {
             case "P": // Pawn
@@ -1200,7 +1167,6 @@ public class Game {
                     double nextY = piece.getY() + dy;
                     Piece targetPiece = findPieceAt(nextX, nextY);
                     if (targetPiece != null && targetPiece.isWhite() != piece.isWhite()) {
-                        System.out.println("DEBUG: Allowing pawn capture move");
                         return true;
                     }
                     return false;
@@ -1214,39 +1180,33 @@ public class Game {
 
                     // One square forward is always allowed
                     if (dy == forwardDirection) {
-                        System.out.println("DEBUG: Allowing regular pawn move");
                         return true;
                     }
 
                     // Two squares forward only on first move
                     if (isStartingPosition && dy == (forwardDirection * 2)) {
-                        System.out.println("DEBUG: Allowing pawn's initial two-square move");
                         return true;
                     }
                 }
                 break;
             case "R": // Rook
                 if ((dx == 0 && Math.abs(dy) == 1) || (Math.abs(dx) == 1 && dy == 0)) {
-                    System.out.println("DEBUG: Allowing rook move as fallback");
                     return true;
                 }
                 break;
             case "N": // Knight
                 if ((Math.abs(dx) == 2 && Math.abs(dy) == 1) || (Math.abs(dx) == 1 && Math.abs(dy) == 2)) {
-                    System.out.println("DEBUG: Allowing knight move as fallback");
                     return true;
                 }
                 break;
             case "B": // Bishop
                 if (Math.abs(dx) == 1 && Math.abs(dy) == 1) {
-                    System.out.println("DEBUG: Allowing bishop move as fallback");
                     return true;
                 }
                 break;
             case "Q": // Queen
             case "K": // King
                 if ((Math.abs(dx) <= 1 && Math.abs(dy) <= 1) && !(dx == 0 && dy == 0)) {
-                    System.out.println("DEBUG: Allowing queen/king move as fallback");
                     return true;
                 }
                 break;
@@ -1283,15 +1243,10 @@ public class Game {
             // Remove the captured piece
             if (targetKey != null) {
                 pieces.remove(targetKey);
-                if (DEBUG)
-                    System.out.println("DEBUG: Removed captured piece " + targetKey);
             }
 
             // Move attacking piece to target position
             movingPiece.setPosition(targetPiece.getX(), targetPiece.getY());
-            if (DEBUG)
-                System.out.println("DEBUG: Moved piece " + movingKey + " to position " + targetPiece.getX() + ","
-                        + targetPiece.getY());
 
             // Check for pawn promotion after capture
             if (shouldPromotePawn(movingPiece, targetPiece.getY())) {
@@ -1301,7 +1256,6 @@ public class Game {
 
             // Publish sound event for eat
             SoundEvent eatSound = new SoundEvent(SoundEvent.SoundType.EAT);
-            System.out.println("DEBUG: Publishing EAT sound event");
             eventBus.publish(eatSound);
 
             // Publish move event with capture information

@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Map;
 
 /**
  * Tests for pawn promotion functionality
@@ -38,9 +37,6 @@ public class PawnPromotionTest {
         Piece whitePawn = pieceFactory.createPiece("PW", 4, 1);
         assertNotNull(whitePawn, "White pawn should be created");
 
-        // Get initial pieces count
-        Map<String, Piece> initialPieces = game.getPieces();
-        int initialCount = initialPieces.size();
 
         // Manually add pawn to game pieces for testing
         String pawnKey = "PW_test_1_4";

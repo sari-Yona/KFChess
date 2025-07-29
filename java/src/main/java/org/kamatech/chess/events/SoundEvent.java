@@ -8,7 +8,7 @@ public class SoundEvent implements Event {
     public enum SoundType {
         MOVE, // Sound for piece movement
         JUMP, // Sound for piece jump
-        EAT   // Sound for piece capture
+        EAT // Sound for piece capture
     }
 
     public final SoundType soundType;
